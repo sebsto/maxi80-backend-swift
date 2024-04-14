@@ -1,0 +1,37 @@
+{
+	"headers": {
+		"x-forwarded-port": "443",
+		"x-amzn-trace-id": "Root=1-661c24a1-33567363201a01082e3a363a",
+		"content-length": "0",
+		"accept": "*/*",
+		"x-forwarded-proto": "https",
+		"x-forwarded-for": "81.254.187.43",
+		"user-agent": "curl/8.4.0",
+		"host": "i24d9nloya.execute-api.us-east-1.amazonaws.com"
+	},
+	"version": "2.0",
+	"rawPath": "/search",
+	"isBase64Encoded": false,
+	"rawQueryString": "term=a%20b",
+	"requestContext": {
+		"stage": "$default",
+		"domainPrefix": "i24d9nloya",
+		"domainName": "i24d9nloya.execute-api.us-east-1.amazonaws.com",
+		"apiId": "i24d9nloya",
+		"requestId": "WOqpWj6zIAMEVNQ=",
+		"http": {
+			"sourceIp": "81.254.187.43",
+			"method": "GET",
+			"userAgent": "curl/8.4.0",
+			"protocol": "HTTP/1.1",
+			"path": "/search"
+		},
+		"accountId": "486652066693",
+		"time": "14/Apr/2024:18:46:57 +0000",
+		"timeEpoch": 1713120417990
+	},
+	"routeKey": "$default",
+	"queryStringParameters": {
+		"term": "a b"
+	}
+}

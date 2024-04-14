@@ -1,0 +1,34 @@
+{
+	"rawPath": "/station",
+	"isBase64Encoded": false,
+	"requestContext": {
+		"domainPrefix": "i24d9nloya",
+		"stage": "$default",
+		"domainName": "i24d9nloya.execute-api.us-east-1.amazonaws.com",
+		"accountId": "486652066693",
+		"apiId": "i24d9nloya",
+		"requestId": "WNWW8jR9IAMEVtw=",
+		"time": "14/Apr/2024:09:11:33 +0000",
+		"http": {
+			"method": "GET",
+			"sourceIp": "81.254.187.43",
+			"protocol": "HTTP/1.1",
+			"path": "/station",
+			"userAgent": "curl/8.4.0"
+		},
+		"timeEpoch": 1713085893753
+	},
+	"rawQueryString": "",
+	"headers": {
+		"x-forwarded-proto": "https",
+		"user-agent": "curl/8.4.0",
+		"content-length": "0",
+		"x-forwarded-port": "443",
+		"x-forwarded-for": "81.254.187.43",
+		"accept": "*/*",
+		"host": "i24d9nloya.execute-api.us-east-1.amazonaws.com",
+		"x-amzn-trace-id": "Root=1-661b9dc5-609fbcdb4803382107558cab"
+	},
+	"routeKey": "$default",
+	"version": "2.0"
+}
