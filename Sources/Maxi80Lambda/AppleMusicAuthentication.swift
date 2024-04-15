@@ -1,10 +1,10 @@
 import Foundation
 import JWTKit
 
-struct Token {
+struct Token: Sendable {
     
     // https://developer.apple.com/documentation/applemusicapi/generating_developer_tokens
-    struct AppleMusicConnect : JWTPayload, Equatable {
+    struct AppleMusicConnect : JWTPayload, Equatable, Sendable {
         
        func verify(using algorithm: JWTAlgorithm) async throws {
             try self.exp.verifyNotExpired()   

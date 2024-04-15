@@ -1,4 +1,4 @@
-public struct Station: Codable {
+public struct Station: Codable, Sendable {
     public let name: String
     public let streamUrl: String
     public let image: String

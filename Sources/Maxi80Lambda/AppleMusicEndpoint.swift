@@ -1,6 +1,6 @@
 import Foundation 
 
-enum AppleMusicEndpoint: String, CaseIterable {
+enum AppleMusicEndpoint: String, CaseIterable, Sendable {
     case test = "/test"
     case search = "/search"
 

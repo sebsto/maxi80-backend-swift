@@ -17,7 +17,7 @@ public protocol URLSessionProtocol {
 }
 
 // callers can express expected HTTP Response code either as range, either as specific value
-public enum ExpectedResponseCode {
+public enum ExpectedResponseCode: Sendable {
     case range(Range<Int>)
     case value(Int)
 
@@ -32,9 +32,9 @@ public enum ExpectedResponseCode {
 }
 
 // provide common code for all network clients
-public class HTTPClient {
+public struct HTTPClient: Sendable {
 
-    public enum HTTPVerb: String {
+    public enum HTTPVerb: String, Sendable {
         case GET
         case POST
     }

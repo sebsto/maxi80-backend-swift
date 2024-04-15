@@ -17,9 +17,9 @@ import FoundationNetworking
 
 // on Linux use the open source Logging library
 #if DEBUG
-public var log: Logger = Log.verboseLogger()
+public let log: Logger = Log.verboseLogger()
 #else
-public var log: Logger = Log.defaultLogger()
+public let log: Logger = Log.defaultLogger()
 #endif
 
 public struct Log {
@@ -34,10 +34,11 @@ public struct Log {
         return log.logger
     }
 
-    private var logger: Logger
+    private let logger: Logger
     private init(logLevel: Logger.Level = .warning, label: String = "") {
-        logger = Logger(label: label == "" ? "CLIlib" : label)
-        logger.logLevel = logLevel    
+        var logger = Logger(label: label == "" ? "CLIlib" : label)
+        logger.logLevel = logLevel   
+        self.logger = logger 
     }
     
 
@@ -49,7 +50,7 @@ public struct Log {
 //on iOS
 #else
 import OSLog
-public var log = Logger()
+public let log = Logger()
 #endif
 
 func logRequest(_ request: URLRequest) {

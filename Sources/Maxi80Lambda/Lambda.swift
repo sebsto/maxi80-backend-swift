@@ -8,7 +8,8 @@ import Maxi80Backend
 // use actor to ensure thread safe access to authTokenString
 actor Maxi80Lambda: LambdaHandler {
 
-    private static var authTokenString: String? = nil
+    private var authTokenString: String? = nil
+
     private let token = Token(secretKey: Secrets.privateKey.rawValue, keyId: Secrets.keyId.rawValue, issuerId: Secrets.teamId.rawValue)
 
     private let httpClient = HTTPClient()
@@ -20,7 +21,6 @@ actor Maxi80Lambda: LambdaHandler {
 
     // the return value must be either APIGatewayV2Response or any Encodable struct
     func handle(_ event: APIGatewayV2Request, context: AWSLambdaRuntimeCore.LambdaContext) async throws -> APIGatewayV2Response {
-
         var header = HTTPHeaders()
         do {
             context.logger.debug("HTTP API Message received")
@@ -51,8 +51,6 @@ actor Maxi80Lambda: LambdaHandler {
                     response = try await search(for: term, context) 
             }
 
-            // if you want control on the status code and headers, return an APIGatewayV2Response
-            // otherwise, just return any Encodable struct, the runtime will wrap it for you
             return APIGatewayV2Response(statusCode: .ok, headers: header, body: String(data: response, encoding: .utf8))
 
         } catch {
@@ -69,16 +67,15 @@ actor Maxi80Lambda: LambdaHandler {
 
         // generate a new auth token if we have one that has expired 
         // this is thread-safe because this struct is an actor 
-        if !(await self.token.validate(token: Maxi80Lambda.authTokenString)) {
+        if !(await self.token.validate(token: authTokenString)) {
             context.logger.debug("No Apple Music Auth Token or it is expired, generating a new one")
-            Maxi80Lambda.authTokenString = try? await token.generate()     
+            authTokenString = try? await token.generate()
         } else {
             context.logger.debug("Re-using a valid Apple Music Auth Token")
         }
 
-        guard let token = Maxi80Lambda.authTokenString else {
-            //TODO: return an HTTP code
-            return Data("no authentication token".utf8)
+        guard let token = authTokenString else {
+            throw LambdaError.noAuthenticationToken(msg: "Search: can not generate an authentication token")
         }
 
         let (data, _) = try await httpClient.apiCall(url: AppleMusicEndpoint.test.url(),
