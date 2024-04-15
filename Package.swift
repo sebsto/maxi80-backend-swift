@@ -33,7 +33,7 @@ let package = Package(
         .target(
             name: "Maxi80Backend",
             dependencies: [
-                .product(name: "Logging", package: "swift-log", condition: .when(platforms: [.linux]))
+                .product(name: "Logging", package: "swift-log", condition: .when(platforms: [.linux, .macOS]))
             ]), 
         .testTarget(
             name: "maxi-80-backend-swiftTests",
