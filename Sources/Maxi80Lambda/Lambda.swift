@@ -5,7 +5,8 @@ import Foundation
 import Maxi80Backend
 
 @main
-struct Maxi80Lambda: LambdaHandler {
+// use actor to ensure thread safe access to authTokenString
+actor Maxi80Lambda: LambdaHandler {
 
     private static var authTokenString: String? = nil
     private let token = Token(secretKey: Secrets.privateKey.rawValue, keyId: Secrets.keyId.rawValue, issuerId: Secrets.teamId.rawValue)
@@ -65,13 +66,14 @@ struct Maxi80Lambda: LambdaHandler {
     }
 
     func search(for: String, _ context: AWSLambdaRuntimeCore.LambdaContext) async throws -> Data {
-        // generate a new auth token if we have one and it's expired 
-        // TODO: there is a potential race on Maxi80Lambda.authTokenString to be fixed
+
+        // generate a new auth token if we have one that has expired 
+        // this is thread-safe because this struct is an actor 
         if !(await self.token.validate(token: Maxi80Lambda.authTokenString)) {
-            context.logger.debug("No Apple Music Auth Token, generating one")
+            context.logger.debug("No Apple Music Auth Token or it is expired, generating a new one")
             Maxi80Lambda.authTokenString = try? await token.generate()     
         } else {
-            context.logger.debug("Using a valid Apple Music AUth Token")
+            context.logger.debug("Re-using a valid Apple Music Auth Token")
         }
 
         guard let token = Maxi80Lambda.authTokenString else {

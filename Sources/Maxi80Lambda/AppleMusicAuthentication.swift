@@ -24,7 +24,7 @@ struct Token {
     let keyId : String
     let issuerId : String
     
-    func keys() async throws -> JWTKeyCollection {
+    private func keys() async throws -> JWTKeyCollection {
         let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .integerSecondsSince1970
         let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .integerSecondsSince1970
         let parser = DefaultJWTParser(jsonDecoder: decoder)
@@ -49,10 +49,9 @@ struct Token {
 
 		func validate(token: String?) async -> Bool {
       guard let token,
-            let payload = try? await keys().verify(token, as: AppleMusicConnect.self) else {
+            let _ = try? await keys().verify(token, as: AppleMusicConnect.self) else {
         return false
       }
       return true
 		} 
-        
 }

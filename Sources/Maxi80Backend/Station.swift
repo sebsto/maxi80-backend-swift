@@ -6,7 +6,7 @@ public struct Station: Codable {
     public let longDesc: String
     public let websiteUrl: String
     public let donationUrl: String
-    public static var `default` = Station(name: "Maxi 80",
+    public static let `default` = Station(name: "Maxi 80",
                                    streamUrl: "https://audio1.maxi80.com",
                                    image: "maxi80_nocover-b.png",
                                    shortDesc: "La radio de toute une génération",
