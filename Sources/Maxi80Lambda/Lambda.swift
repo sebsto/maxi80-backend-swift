@@ -5,14 +5,28 @@ import Foundation
 import Maxi80Backend
 
 @main
-// use actor to ensure thread safe access to authTokenString
-actor Maxi80Lambda: LambdaHandler {
+struct Maxi80Lambda: LambdaHandler {
 
-    private var authTokenString: String? = nil
-
-    private let token = Token(secretKey: Secrets.privateKey.rawValue, keyId: Secrets.keyId.rawValue, issuerId: Secrets.teamId.rawValue)
+    // isolate the shared mutable state as an actor
+    // this is required for Swift 6, but not for Lambda
+    // as each Lambda container is called once at a time
+    actor JWTCache {
+        var authTokenString: String? = nil
+        func token(_ token: String) async {
+            self.authTokenString = token
+        }
+        func token() async -> String? {
+            return self.authTokenString
+        }
+    }
+    
+    private let tokenFactory = TokenFactory(secretKey: Secrets.privateKey.rawValue,
+                                            keyId: Secrets.keyId.rawValue,
+                                            issuerId: Secrets.teamId.rawValue)
+    private let tokenCache = JWTCache()
 
     private let httpClient = HTTPClient()
+
 
     init(context: LambdaInitializationContext) async throws {
         context.logger.info(
@@ -46,12 +60,16 @@ actor Maxi80Lambda: LambdaHandler {
                     response = try encode(station())
                 case .search: 
                     guard let term = event.queryStringParameters?["term"] else {
-                        return APIGatewayV2Response(statusCode: .badRequest, headers: header, body: "no 'term' query paramater")
+                        return APIGatewayV2Response(statusCode: .badRequest,
+                                                    headers: header,
+                                                    body: "no 'term' query paramater")
                     }
                     response = try await search(for: term, context) 
             }
 
-            return APIGatewayV2Response(statusCode: .ok, headers: header, body: String(data: response, encoding: .utf8))
+            return APIGatewayV2Response(statusCode: .ok,
+                                        headers: header,
+                                        body: String(data: response, encoding: .utf8))
 
         } catch {
             header["content-type"] = "text/plain"
@@ -59,17 +77,13 @@ actor Maxi80Lambda: LambdaHandler {
         }
     }
 
-    func station() -> Station {
-        return Station.default
-    }
-
-    func search(for: String, _ context: AWSLambdaRuntimeCore.LambdaContext) async throws -> Data {
-
+    private func authorizationHeader(_ context: AWSLambdaRuntimeCore.LambdaContext) async throws -> [String:String] {
         // generate a new auth token if we have one that has expired 
         // this is thread-safe because this struct is an actor 
-        if !(await self.token.validate(token: authTokenString)) {
+        var authTokenString = await self.tokenCache.token()
+        if !(await self.tokenFactory.validate(token: authTokenString)) {
             context.logger.debug("No Apple Music Auth Token or it is expired, generating a new one")
-            authTokenString = try? await token.generate()
+            authTokenString = try? await tokenFactory.generate()
         } else {
             context.logger.debug("Re-using a valid Apple Music Auth Token")
         }
@@ -77,9 +91,22 @@ actor Maxi80Lambda: LambdaHandler {
         guard let token = authTokenString else {
             throw LambdaError.noAuthenticationToken(msg: "Search: can not generate an authentication token")
         }
+        await self.tokenCache.token(token)
+        return ["Authorization" : "Bearer \(token)"]
+    }
 
-        let (data, _) = try await httpClient.apiCall(url: AppleMusicEndpoint.test.url(),
-                                                           headers: ["Authorization" : "Bearer \(token)"])
+    func station() -> Station {
+        return Station.default
+    }
+
+    func search(for term: String, _ context: AWSLambdaRuntimeCore.LambdaContext) async throws -> Data {
+
+        let searchFields = AppleMusicSearchType.items(searchTypes: [.artists, .albums, .songs])
+        let searchterms = AppleMusicSearchType.term(search: term)
+        let (data, _) = try await httpClient.apiCall(
+                                        url: AppleMusicEndpoint.search.url(args: [searchFields, searchterms]),
+                                        headers: authorizationHeader(context)
+                                  )
         return data
 
     }
