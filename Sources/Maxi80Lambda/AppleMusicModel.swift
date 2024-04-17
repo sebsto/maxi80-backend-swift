@@ -1,4 +1,6 @@
 
+// https://developer.apple.com/documentation/applemusicapi
+
 public struct Song: Decodable {
   public let id: String
   public let type: String

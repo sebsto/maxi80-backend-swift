@@ -1,10 +1,10 @@
 import Foundation
 import JWTKit
 
-struct Token: Sendable {
+struct TokenFactory: Sendable {
     
     // https://developer.apple.com/documentation/applemusicapi/generating_developer_tokens
-    struct AppleMusicConnect : JWTPayload, Equatable, Sendable {
+    struct AppleMusicToken : JWTPayload, Equatable, Sendable {
         
        func verify(using algorithm: JWTAlgorithm) async throws {
             try self.exp.verifyNotExpired()   
@@ -38,10 +38,10 @@ struct Token: Sendable {
 
     func generate() async throws -> String {
         
-        let payload = AppleMusicConnect(iss: .init(value: issuerId),
-                                             iat: .init(value: .now),
-                                             exp: .init(value: .init(timeIntervalSinceNow: 1*24*60*60)) // 1 day
-                                            )
+        let payload = AppleMusicToken(iss: .init(value: issuerId),
+                                      iat: .init(value: .now),
+                                      exp: .init(value: .init(timeIntervalSinceNow: 1*24*60*60)) // 1 day
+                                      ) 
         let jwt = try await keys().sign(payload, kid: JWKIdentifier(string: keyId))
 
         return jwt
@@ -49,7 +49,7 @@ struct Token: Sendable {
 
 		func validate(token: String?) async -> Bool {
       guard let token,
-            let _ = try? await keys().verify(token, as: AppleMusicConnect.self) else {
+            let _ = try? await keys().verify(token, as: AppleMusicToken.self) else {
         return false
       }
       return true
