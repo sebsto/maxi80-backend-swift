@@ -10,4 +10,4 @@ DerivedData/
 .vscode
 samconfig.toml
 template.yaml
-Secrets.swift
+Secret.swift

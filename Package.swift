@@ -11,7 +11,8 @@ let package = Package(
     ],
     products: [
         .executable(name: "Maxi80Lambda", targets: ["Maxi80Lambda"]),
-        .library(name: "Maxi80Backend", targets: ["Maxi80Backend"])
+        .library(name: "Maxi80Backend", targets: ["Maxi80Backend"]),
+        .executable(name: "StoreSecret", targets: ["CLI"]),
     ],
     dependencies: [
         //TODO: tag specific versions instead of main branches
@@ -19,6 +20,7 @@ let package = Package(
         .package(url: "https://github.com/swift-server/swift-aws-lambda-events.git", branch: "main"),
         .package(url: "https://github.com/vapor/jwt-kit.git", .upToNextMajor(from: "5.0.0-beta.1")),
         .package(url: "https://github.com/apple/swift-log.git", .upToNextMajor(from: "1.5.0")),
+        .package(url: "https://github.com/awslabs/aws-sdk-swift.git", from: "0.41.0")
     ],
     targets: [
         .executableTarget(
@@ -27,6 +29,8 @@ let package = Package(
                 .product(name: "AWSLambdaRuntime", package: "swift-aws-lambda-runtime"),
                 .product(name: "AWSLambdaEvents", package: "swift-aws-lambda-events"),
                 .product(name: "JWTKit", package: "jwt-kit"),
+                .product(name: "AWSS3", package: "aws-sdk-swift"),
+                .product(name: "AWSSecretsManager", package: "aws-sdk-swift"),
                 .target(name: "Maxi80Backend")
             ]
         ),
@@ -35,6 +39,12 @@ let package = Package(
             dependencies: [
                 .product(name: "Logging", package: "swift-log", condition: .when(platforms: [.linux, .macOS]))
             ]), 
+        .executableTarget(
+            name: "CLI",
+            dependencies: [
+                .product(name: "AWSSecretsManager", package: "aws-sdk-swift"),
+            ]
+        ),
         .testTarget(
             name: "maxi-80-backend-swiftTests",
             dependencies: ["Maxi80Lambda"]),

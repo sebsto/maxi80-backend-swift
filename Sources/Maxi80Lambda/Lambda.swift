@@ -2,6 +2,8 @@ import AWSLambdaEvents
 import AWSLambdaRuntime
 import Foundation
 
+import ClientRuntime
+
 import Maxi80Backend
 
 @main
@@ -20,17 +22,38 @@ struct Maxi80Lambda: LambdaHandler {
         }
     }
     
-    private let tokenFactory = TokenFactory(secretKey: Secrets.privateKey.rawValue,
-                                            keyId: Secrets.keyId.rawValue,
-                                            issuerId: Secrets.teamId.rawValue)
-    private let tokenCache = JWTCache()
+    private let tokenFactory: TokenFactory?
+    private let tokenCache: JWTCache = JWTCache()
 
     private let httpClient = HTTPClient()
 
+    let secretName = "Maxi80_AppleMusicAPI"
 
     init(context: LambdaInitializationContext) async throws {
-        context.logger.info(
-            "Log Level env var : \(ProcessInfo.processInfo.environment["LOG_LEVEL"] ?? "undefined" )")
+        let logLevel = ProcessInfo.processInfo.environment["LOG_LEVEL"] ?? "undefined"
+        context.logger.info("Log Level env var : \(logLevel)")
+        if logLevel == "debug" || logLevel == "trace" {
+            await SDKLoggingSystem.initialize(logLevel: .debug)
+        } else {
+            await SDKLoggingSystem.initialize(logLevel: .warning)
+        }
+
+        // read the region from the environment variable
+        guard let region = ProcessInfo.processInfo.environment["AWS_REGION"] else {
+            context.logger.error("Can not read the AWS_Region environment variable")
+            tokenFactory = nil
+            return
+        }
+
+        let secretsManager = SecretsManager(secretName: secretName, region: region)
+        guard let secret = try? await secretsManager.getSecret() else {
+            context.logger.error("Can not read the \(secretName) secret in region: \(region)")
+            tokenFactory = nil
+            return
+        }
+        tokenFactory = TokenFactory(secretKey: secret.privateKey,
+                                    keyId: secret.keyId,
+                                    issuerId: secret.teamId)
     }
 
     // the return value must be either APIGatewayV2Response or any Encodable struct
@@ -78,10 +101,15 @@ struct Maxi80Lambda: LambdaHandler {
     }
 
     private func authorizationHeader(_ context: AWSLambdaRuntimeCore.LambdaContext) async throws -> [String:String] {
+
+        guard let tokenFactory = self.tokenFactory else {
+            throw LambdaError.noTokenFactory(msg: "TokenFactory has not been initialized. This is likely because we couldn't access SecretsManager to retrieve the signing keys")
+        }
+
         // generate a new auth token if we have one that has expired 
         // this is thread-safe because this struct is an actor 
         var authTokenString = await self.tokenCache.token()
-        if !(await self.tokenFactory.validate(token: authTokenString)) {
+        if !(await tokenFactory.validate(token: authTokenString)) {
             context.logger.debug("No Apple Music Auth Token or it is expired, generating a new one")
             authTokenString = try? await tokenFactory.generate()
         } else {
