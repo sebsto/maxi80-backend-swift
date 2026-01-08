@@ -1,0 +1,22 @@
+Transform: AWS::Serverless-2016-10-31
+AWSTemplateFormatVersion: 2010-09-09
+Description: Maxi80 iOS app backend service
+
+Resources:
+   Maxi80Lambda:
+      Description: This function provides the backend to the Maxi80 iOS app
+      Type: AWS::Serverless::Function
+      Properties:
+         Handler: Provided
+         Environment:
+            Variables:
+               SECRETS: maxi80_secrets
+               LOG_LEVEL: debug
+         Architectures:
+            - arm64
+         CodeUri: .build/plugins/AWSLambdaPackager/outputs/AWSLambdaPackager/Maxi80Lambda/Maxi80Lambda.zip
+         Runtime: provided.al2
+         Events:
+            HttpApiEvent:
+               Type: HttpApi
+

@@ -1,0 +1,761 @@
+{
+	"body": {
+		"results": {
+			"songs": {
+				"href": "/v1/catalog/fr/search?limit=5&term=Funkin%27+for+jamaica+-+Tom+Browne&types=songs",
+				"next": "/v1/catalog/fr/search?offset=5&term=Funkin%27+for+jamaica+-+Tom+Browne&types=songs",
+				"data": [
+					{
+						"id": "307853348",
+						"type": "songs",
+						"href": "/v1/catalog/fr/songs/307853348",
+						"attributes": {
+							"albumName": "Funkin' for Jamaica",
+							"genreNames": [
+								"Jazz",
+								"Musique",
+								"Inspiration jazz",
+								"Hard bop"
+							],
+							"trackNumber": 1,
+							"releaseDate": "1979-01-01",
+							"durationInMillis": 280933,
+							"isrc": "USAR18000123",
+							"artwork": {
+								"width": 604,
+								"height": 600,
+								"url": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/b5/f3/b3/b5f3b358-b726-1d5e-ab1e-ccd895c0a7f5/mzi.odtbgnld.jpg/{w}x{h}bb.jpg",
+								"bgColor": "111312",
+								"textColor1": "faa45d",
+								"textColor2": "ee6d3b",
+								"textColor3": "cb874e",
+								"textColor4": "c25b32"
+							},
+							"composerName": "Tom Browne & Thomassina Smith",
+							"playParams": {
+								"id": "307853348",
+								"kind": "song"
+							},
+							"url": "https://music.apple.com/fr/album/funkin-for-jamaica/307853256?i=307853348",
+							"discNumber": 1,
+							"hasCredits": false,
+							"hasLyrics": true,
+							"isAppleDigitalMaster": false,
+							"name": "Funkin' for Jamaica",
+							"previews": [
+								{
+									"url": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/66/ed/69/66ed696b-949e-2581-5039-4fe282eaa4df/mzaf_15382635254844724730.plus.aac.p.m4a"
+								}
+							],
+							"artistName": "Tom Browne"
+						}
+					},
+					{
+						"id": "1017970073",
+						"type": "songs",
+						"href": "/v1/catalog/fr/songs/1017970073",
+						"attributes": {
+							"albumName": "The Legacy of Funk",
+							"genreNames": [
+								"Pop",
+								"Musique"
+							],
+							"trackNumber": 10,
+							"durationInMillis": 280027,
+							"releaseDate": "1979-01-01",
+							"isrc": "USAR18000123",
+							"artwork": {
+								"width": 1500,
+								"height": 1500,
+								"url": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/8b/4e/c0/8b4ec0fc-1ebc-ca1c-bb91-17fda684a59e/886445242195.jpg/{w}x{h}bb.jpg",
+								"bgColor": "d1b796",
+								"textColor1": "0d0000",
+								"textColor2": "18212d",
+								"textColor3": "34241e",
+								"textColor4": "3d3f42"
+							},
+							"composerName": "Tom Browne & Thomassina Smith",
+							"url": "https://music.apple.com/fr/album/funkin-for-jamaica/1017969857?i=1017970073",
+							"playParams": {
+								"id": "1017970073",
+								"kind": "song"
+							},
+							"discNumber": 1,
+							"hasCredits": false,
+							"hasLyrics": true,
+							"isAppleDigitalMaster": false,
+							"name": "Funkin' for Jamaica",
+							"previews": [
+								{
+									"url": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview112/v4/ad/81/e2/ad81e2c1-3222-c1a5-ed18-161ce43f5d7d/mzaf_17165271034176887764.plus.aac.p.m4a"
+								}
+							],
+							"artistName": "Tom Browne"
+						}
+					},
+					{
+						"id": "1290542847",
+						"type": "songs",
+						"href": "/v1/catalog/fr/songs/1290542847",
+						"attributes": {
+							"albumName": "Love Approach (Bonus Track)",
+							"genreNames": [
+								"Jazz",
+								"Musique"
+							],
+							"trackNumber": 9,
+							"releaseDate": "1980-02-01",
+							"durationInMillis": 224867,
+							"isrc": "USAR10500364",
+							"artwork": {
+								"width": 3375,
+								"height": 3375,
+								"url": "https://is1-ssl.mzstatic.com/image/thumb/Music128/v4/60/07/8b/60078bc2-ab7d-f719-1bcb-fe8f63ebd1b6/886446537733.jpg/{w}x{h}bb.jpg",
+								"bgColor": "171516",
+								"textColor1": "fcddc9",
+								"textColor2": "eedcbd",
+								"textColor3": "ceb5a5",
+								"textColor4": "c3b49c"
+							},
+							"composerName": "Tom Browne & Thomassina Smith",
+							"url": "https://music.apple.com/fr/album/funkin-for-jamaica-1991-7-remix/1290541766?i=1290542847",
+							"playParams": {
+								"id": "1290542847",
+								"kind": "song"
+							},
+							"discNumber": 1,
+							"hasCredits": false,
+							"hasLyrics": true,
+							"isAppleDigitalMaster": false,
+							"name": "Funkin' for Jamaica (1991 7\" Remix)",
+							"previews": [
+								{
+									"url": "https: //audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/58/5f/da/585fda68-7e59-eb47-63f8-6003e1f004c1/mzaf_8606363155373255013.plus.aac.p.m4a"
+								}
+							],
+							"artistName": "Tom Browne"
+						}
+					},
+					{
+						"id": "1308530972",
+						"type": "songs",
+						"href": "/v1/catalog/fr/songs/1308530972",
+						"attributes": {
+							"albumName": "DISCO - 100 Hit's - Dance floor fillers from the 70s and 80s inc. The Jacksons, Boney M & Earth Wind & Fire",
+							"genreNames": [
+								"Jazz",
+								"Musique"
+							],
+							"trackNumber": 94,
+							"releaseDate": "2013-06-21",
+							"durationInMillis": 198907,
+							"isrc": "USAR18000179",
+							"artwork": {
+								"width": 1500,
+								"height": 1500,
+								"url": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/f7/68/e5/f768e5b6-d92d-f8e3-9607-cbd54dbf624a/886444019651.jpg/{w}x{h}bb.jpg",
+								"bgColor": "534382",
+								"textColor1": "faf9d9",
+								"textColor2": "fdebde",
+								"textColor3": "d8d4c8",
+								"textColor4": "dbc9cc"
+							},
+							"composerName": "Tom Browne & Thomassina Smith",
+							"playParams": {
+								"id": "1308530972",
+								"kind": "song"
+							},
+							"url": "https://music.apple.com/fr/album/funkin-for-jamaica/1308515247?i=1308530972",
+							"discNumber": 1,
+							"hasCredits": false,
+							"isAppleDigitalMaster": false,
+							"hasLyrics": true,
+							"name": "Funkin' for Jamaica",
+							"previews": [
+								{
+									"url": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview122/v4/2b/46/c8/2b46c84b-cd4a-3aa1-3d24-98840efab3f6/mzaf_16485013535860732400.plus.aac.p.m4a"
+								}
+							],
+							"artistName": "Tom Browne"
+						}
+					},
+					{
+						"id": "273098535",
+						"type": "songs",
+						"href": "/v1/catalog/fr/songs/273098535",
+						"attributes": {
+							"albumName": "The Best of Disco",
+							"genreNames": [
+								"R&B/Soul",
+								"Musique",
+								"Disco"
+							],
+							"trackNumber": 18,
+							"releaseDate": "1996-11-25",
+							"durationInMillis": 216605,
+							"isrc": "USAR17400150",
+							"artwork": {
+								"width": 600,
+								"height": 600,
+								"url": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/a8/41/3c/a8413ca6-0a4d-a4f7-2b79-ff4b4e555f68/mzi.evrdewoi.jpg/{w}x{h}bb.jpg",
+								"bgColor": "000000",
+								"textColor1": "f3953c",
+								"textColor2": "ef4b54",
+								"textColor3": "c27730",
+								"textColor4": "bf3c43"
+							},
+							"composerName": "Tom Browne & Thomassina Smith",
+							"url": "https://music.apple.com/fr/album/funkin-for-jamaica/273098292?i=273098535",
+							"playParams": {
+								"id": "273098535",
+								"kind": "song"
+							},
+							"discNumber": 1,
+							"hasCredits": false,
+							"hasLyrics": true,
+							"isAppleDigitalMaster": false,
+							"name": "Funkin' for Jamaica",
+							"previews": [
+								{
+									"url": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview122/v4/59/cb/cc/59cbcc62-a393-2e55-b568-d5aadc8d550c/mzaf_10233998183119059255.plus.aac.p.m4a"
+								}
+							],
+							"artistName": "Tom Browne"
+						}
+					}
+				]
+			},
+			"albums": {
+				"href": "/v1/catalog/fr/search?limit=5&term=Funkin%27+for+jamaica+-+Tom+Browne&types=albums",
+				"data": [
+					{
+						"id": "307853256",
+						"type": "albums",
+						"href": "/v1/catalog/fr/albums/307853256",
+						"attributes": {
+							"copyright": "℗ 1997 Sony Music Entertainment",
+							"genreNames": [
+								"Jazz",
+								"Musique",
+								"Inspiration jazz",
+								"Hard bop"
+							],
+							"releaseDate": "2003-10-20",
+							"upc": "884977042337",
+							"isMasteredForItunes": false,
+							"artwork": {
+								"width": 604,
+								"height": 600,
+								"url": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/b5/f3/b3/b5f3b358-b726-1d5e-ab1e-ccd895c0a7f5/mzi.odtbgnld.jpg/{w}x{h}bb.jpg",
+								"bgColor": "111312",
+								"textColor1": "faa45d",
+								"textColor2": "ee6d3b",
+								"textColor3": "cb874e",
+								"textColor4": "c25b32"
+							},
+							"playParams": {
+								"id": "307853256",
+								"kind": "album"
+							},
+							"url": "https://music.apple.com/fr/album/funkin-for-jamaica/307853256",
+							"recordLabel": "Legacy Recordings",
+							"isCompilation": false,
+							"trackCount": 14,
+							"isSingle": false,
+							"name": "Funkin' for Jamaica",
+							"artistName": "Tom Browne",
+							"isComplete": true
+						}
+					}
+				]
+			},
+			"artists": {
+				"href": "/v1/catalog/fr/search?limit=5&term=Funkin%27+for+jamaica+-+Tom+Browne&types=artists",
+				"data": [
+					{
+						"id": "3592412",
+						"type": "artists",
+						"href": "/v1/catalog/fr/artists/3592412",
+						"attributes": {
+							"name": "Tom Browne",
+							"genreNames": [
+								"Jazz"
+							],
+							"artwork": {
+								"width": 717,
+								"height": 716,
+								"url": "https://is1-ssl.mzstatic.com/image/thumb/Features115/v4/20/8e/89/208e8978-cbbf-7a10-5649-a08bddd86b37/pr_source.png/{w}x{h}bb.jpg",
+								"bgColor": "1f1d1f",
+								"textColor1": "f7f5f7",
+								"textColor2": "d9d6d9",
+								"textColor3": "cccacc",
+								"textColor4": "b3b1b3"
+							},
+							"url": "https://music.apple.com/fr/artist/tom-browne/3592412"
+						},
+						"relationships": {
+							"albums": {
+								"href": "/v1/catalog/fr/artists/3592412/albums",
+								"next": "/v1/catalog/fr/artists/3592412/albums?offset=25",
+								"data": [
+									{
+										"id": "1290541766",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1290541766"
+									},
+									{
+										"id": "307853256",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/307853256"
+									},
+									{
+										"id": "259087575",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/259087575"
+									},
+									{
+										"id": "1290562756",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1290562756"
+									},
+									{
+										"id": "1437127470",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1437127470"
+									},
+									{
+										"id": "799080239",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/799080239"
+									},
+									{
+										"id": "1657244262",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1657244262"
+									},
+									{
+										"id": "1290541287",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1290541287"
+									},
+									{
+										"id": "260566393",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/260566393"
+									},
+									{
+										"id": "1656457056",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1656457056"
+									},
+									{
+										"id": "1656428660",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1656428660"
+									},
+									{
+										"id": "1439558166",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1439558166"
+									},
+									{
+										"id": "1656447609",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1656447609"
+									},
+									{
+										"id": "1645882177",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1645882177"
+									},
+									{
+										"id": "269380630",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/269380630"
+									},
+									{
+										"id": "387084954",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/387084954"
+									},
+									{
+										"id": "1608368787",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1608368787"
+									},
+									{
+										"id": "1110549999",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1110549999"
+									},
+									{
+										"id": "1349436749",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1349436749"
+									},
+									{
+										"id": "1349436530",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1349436530"
+									},
+									{
+										"id": "1159541385",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1159541385"
+									},
+									{
+										"id": "1721276096",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1721276096"
+									},
+									{
+										"id": "1061702320",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1061702320"
+									},
+									{
+										"id": "1702786752",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1702786752"
+									},
+									{
+										"id": "1572889978",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1572889978"
+									}
+								]
+							}
+						}
+					},
+					{
+						"id": "169711",
+						"type": "artists",
+						"href": "/v1/catalog/fr/artists/169711",
+						"attributes": {
+							"name": "Curtis Mayfield",
+							"genreNames": [
+								"R&B/Soul"
+							],
+							"artwork": {
+								"width": 1900,
+								"height": 1900,
+								"url": "https://is1-ssl.mzstatic.com/image/thumb/Features115/v4/48/9c/d6/489cd6cd-2133-f71c-1f0c-7d7cb9a9653e/mzl.ippbmumx.jpg/{w}x{h}bb.jpg",
+								"bgColor": "fbffff",
+								"textColor1": "481e1f",
+								"textColor2": "472d28",
+								"textColor3": "6b4b4c",
+								"textColor4": "6b5753"
+							},
+							"url": "https://music.apple.com/fr/artist/curtis-mayfield/169711"
+						},
+						"relationships": {
+							"albums": {
+								"href": "/v1/catalog/fr/artists/169711/albums",
+								"next": "/v1/catalog/fr/artists/169711/albums?offset=25",
+								"data": [
+									{
+										"id": "29168201",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/29168201"
+									},
+									{
+										"id": "1531481265",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1531481265"
+									},
+									{
+										"id": "59389126",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/59389126"
+									},
+									{
+										"id": "1531690761",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1531690761"
+									},
+									{
+										"id": "43465713",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/43465713"
+									},
+									{
+										"id": "358129713",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/358129713"
+									},
+									{
+										"id": "1048472205",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1048472205"
+									},
+									{
+										"id": "29168532",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/29168532"
+									},
+									{
+										"id": "20003471",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/20003471"
+									},
+									{
+										"id": "1535459389",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1535459389"
+									},
+									{
+										"id": "111218572",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/111218572"
+									},
+									{
+										"id": "1181989962",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1181989962"
+									},
+									{
+										"id": "1531478987",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1531478987"
+									},
+									{
+										"id": "1091023995",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1091023995"
+									},
+									{
+										"id": "1531696546",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1531696546"
+									},
+									{
+										"id": "1531486315",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1531486315"
+									},
+									{
+										"id": "1474887185",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1474887185"
+									},
+									{
+										"id": "1531893515",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1531893515"
+									},
+									{
+										"id": "1129937599",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1129937599"
+									},
+									{
+										"id": "1449314858",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1449314858"
+									},
+									{
+										"id": "1531481027",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1531481027"
+									},
+									{
+										"id": "120146434",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/120146434"
+									},
+									{
+										"id": "1574404269",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1574404269"
+									},
+									{
+										"id": "43465683",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/43465683"
+									},
+									{
+										"id": "1191032654",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1191032654"
+									}
+								]
+							}
+						}
+					},
+					{
+						"id": "524856",
+						"type": "artists",
+						"href": "/v1/catalog/fr/artists/524856",
+						"attributes": {
+							"name": "UB40",
+							"genreNames": [
+								"Reggae"
+							],
+							"artwork": {
+								"width": 2387,
+								"height": 2387,
+								"url": "https://is1-ssl.mzstatic.com/image/thumb/AMCArtistImages116/v4/5b/d8/64/5bd86434-1034-a3d7-3327-bd2a27fcadc9/792acf7f-b7ae-40ec-902a-46a616374691_file_cropped.png/{w}x{h}bb.jpg",
+								"bgColor": "101010",
+								"textColor1": "e3b9a9",
+								"textColor2": "e4af94",
+								"textColor3": "b8978a",
+								"textColor4": "ba8f7a"
+							},
+							"url": "https://music.apple.com/fr/artist/ub40/524856"
+						},
+						"relationships": {
+							"albums": {
+								"href": "/v1/catalog/fr/artists/524856/albums",
+								"next": "/v1/catalog/fr/artists/524856/albums?offset=25",
+								"data": [
+									{
+										"id": "724633277",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/724633277"
+									},
+									{
+										"id": "723424221",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/723424221"
+									},
+									{
+										"id": "714519118",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/714519118"
+									},
+									{
+										"id": "724223064",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/724223064"
+									},
+									{
+										"id": "723495499",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/723495499"
+									},
+									{
+										"id": "712942604",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/712942604"
+									},
+									{
+										"id": "714986727",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/714986727"
+									},
+									{
+										"id": "724160143",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/724160143"
+									},
+									{
+										"id": "1559826560",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1559826560"
+									},
+									{
+										"id": "724098987",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/724098987"
+									},
+									{
+										"id": "1724187014",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1724187014"
+									},
+									{
+										"id": "714450199",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/714450199"
+									},
+									{
+										"id": "1735044974",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1735044974"
+									},
+									{
+										"id": "723843889",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/723843889"
+									},
+									{
+										"id": "712445905",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/712445905"
+									},
+									{
+										"id": "723398324",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/723398324"
+									},
+									{
+										"id": "723365546",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/723365546"
+									},
+									{
+										"id": "714884220",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/714884220"
+									},
+									{
+										"id": "714592987",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/714592987"
+									},
+									{
+										"id": "1376040554",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1376040554"
+									},
+									{
+										"id": "724201253",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/724201253"
+									},
+									{
+										"id": "724165265",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/724165265"
+									},
+									{
+										"id": "1444126525",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/1444126525"
+									},
+									{
+										"id": "724305290",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/724305290"
+									},
+									{
+										"id": "724325750",
+										"type": "albums",
+										"href": "/v1/catalog/fr/albums/724325750"
+									}
+								]
+							}
+						}
+					}
+				]
+			}
+		},
+		"meta": {
+			"results": {
+				"order": [
+					"songs",
+					"albums",
+					"artists"
+				],
+				"rawOrder": [
+					"songs",
+					"albums",
+					"artists"
+				]
+			}
+		}
+	}","statusCode": 200,
+	"headers": {
+		"content-type": "application/json"
+	}
+}

@@ -8,6 +8,5 @@ DerivedData/
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 .netrc
 .vscode
-samconfig.toml
-template.yaml
+.swiftpm
 Secret.swift
