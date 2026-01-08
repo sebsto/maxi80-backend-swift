@@ -19,8 +19,6 @@ struct GlobalOptions: ParsableArguments {
     )
     var profile: String? = nil
 
-    let secretName = "Maxi80-AppleMusicKey"
-
     private static let _logger = Logger(label: "Maxi80CLI")
     static func logger(verbose: Bool) -> Logger {
         var logger = _logger
@@ -30,11 +28,5 @@ struct GlobalOptions: ParsableArguments {
             logger.logLevel = .info
         }
         return logger
-    }
-    // explitly ignore secretName
-    enum CodingKeys: CodingKey {
-        case verbose
-        case region
-        case profile
     }
 }

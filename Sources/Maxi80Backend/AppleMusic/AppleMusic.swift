@@ -1,29 +1,33 @@
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
 
 // https://developer.apple.com/documentation/applemusicapi
 
-enum AppleMusicSearchType: String, Sendable {
+public enum AppleMusicSearchType: String, Sendable {
     case artists
     case songs
     case albums
 
-    static func items(searchTypes: [AppleMusicSearchType]) -> URLQueryItem {
+    public static func items(searchTypes: [AppleMusicSearchType]) -> URLQueryItem {
         URLQueryItem(
             name: "types",
             value: String(searchTypes.map { $0.rawValue }.joined(separator: ","))
         )
     }
-    static func term(search: String) -> URLQueryItem {
+    public static func term(search: String) -> URLQueryItem {
         URLQueryItem(name: "term", value: search)
     }
 }
 
-enum AppleMusicEndpoint: String, CaseIterable, Sendable {
+public enum AppleMusicEndpoint: String, CaseIterable, Sendable {
 
     case test = "/test"
     case search = "/catalog/fr/search"
 
-    static func from(path: String) -> Self? {
+    public static func from(path: String) -> Self? {
         self.allCases.first { $0.rawValue == path }
     }
 
@@ -31,7 +35,7 @@ enum AppleMusicEndpoint: String, CaseIterable, Sendable {
         URL(string: "https://api.music.apple.com/v1")!
     }
 
-    func url(args: [URLQueryItem] = []) -> URL {
+    public func url(args: [URLQueryItem] = []) -> URL {
         var result = baseURI().appendingPathComponent(self.rawValue)
         result.append(queryItems: args)
         return result

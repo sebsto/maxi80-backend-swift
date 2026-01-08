@@ -1,8 +1,17 @@
-import Foundation
 import JWTKit
+
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import Foundation
+#endif
 
 /// Use this struct to store the secret in AWS SecretsManager
 public struct AppleMusicSecret: Codable, Sendable, CustomStringConvertible {
+
+    // the name to store this secret on a ssecret tore manager
+    public static let name = "Maxi80-AppleMusicKey"
+
     public var description: String { "\nTeam Id: \(teamId)\nKey Id: \(keyId)\nPrivate key: -shuuuut, it's a secret—" }
 
     public init(privateKey: String, teamId: String, keyId: String) {
@@ -10,9 +19,9 @@ public struct AppleMusicSecret: Codable, Sendable, CustomStringConvertible {
         self.teamId = teamId
         self.keyId = keyId
     }
-    private let privateKey: String
-    private let teamId: String
-    private let keyId: String
+    public let privateKey: String
+    public let teamId: String
+    public let keyId: String
 }
 
 /// Use this struct to generate JWT Tokens and authenticate API calls to Apple Music
@@ -21,6 +30,12 @@ public struct JWTTokenFactory {
     private let secretKey: String
     private let keyId: String
     private let issuerId: String
+
+    public init(secretKey: String, keyId: String, issuerId: String) {
+        self.secretKey = secretKey
+        self.keyId = keyId
+        self.issuerId = issuerId
+    }
 
     private func keys() async throws -> JWTKeyCollection {
         let encoder = JSONEncoder()
@@ -53,7 +68,7 @@ public struct JWTTokenFactory {
         return jwt
     }
 
-    func validateJWTString(token: String?) async -> Bool {
+    public func validateJWTString(token: String?) async -> Bool {
         guard let token,
             (try? await keys().verify(token, as: AppleMusicToken.self)) != nil
         else {

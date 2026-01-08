@@ -1,155 +1,169 @@
-// import AWSLambdaEvents
-// import AWSLambdaRuntime
-// import Foundation
-// import Maxi80Backend
+import AWSLambdaEvents
+import AWSLambdaRuntime
+import HTTPTypes
+import Logging
+import Maxi80Backend
 
-// @main
-// struct Maxi80Lambda: LambdaHandler {
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import Foundation
+#endif
 
-//   // isolate the shared mutable state as an actor
-//   // this is required for Swift 6, but not for Lambda
-//   // as each Lambda container is called once at a time
-//   actor JWTCache {
-//     var authTokenString: String? = nil
-//     func token(_ token: String) async {
-//       self.authTokenString = token
-//     }
-//     func token() async -> String? {
-//       return self.authTokenString
-//     }
-//   }
+@main
+struct Maxi80Lambda: LambdaHandler {
 
-//   private let tokenFactory: JWTTokenFactory?
-//   private let tokenCache: JWTCache = JWTCache()
+    private let tokenFactory: JWTTokenFactory
+    private let httpClient: MusicAPIClient
+    private let tokenCache = TokenCache()
+    private let logger: Logger
 
-//   private let httpClient = Maxi80HTTPClient()
+    // isolate the shared mutable state as an actor
+    // in theory, we don't need this on Lambda as exactly one handler is running at a time
+    actor TokenCache {
+        var authTokenString: String? = nil
+        func token(_ token: String) async {
+            self.authTokenString = token
+        }
+        func token() async -> String? {
+            self.authTokenString
+        }
+    }
 
-//   let secretName = "Maxi80_AppleMusicAPI"
+    init(musicAPIClient: MusicAPIClient) async throws {
 
-//   init(context: LambdaInitializationContext) async throws {
-//     let logLevel = ProcessInfo.processInfo.environment["LOG_LEVEL"] ?? "undefined"
-//     context.logger.info("Log level env var : \(logLevel)")
+        // read the LOG_LEVEL and configure the logger
+        var logger = Logger(label: "Maxi80Lambda")
+        logger.logLevel = Lambda.env("LOG_LEVEL").flatMap { Logger.Level(rawValue: $0) } ?? .error
+        logger.trace("Log level env var : \(logger.logLevel)")
+        self.logger = logger
 
-//     // read the region from the environment variable
-//     guard let regionValue = ProcessInfo.processInfo.environment["AWS_REGION"],
-//       let region = Region(awsRegionName: regionValue)
-//     else {
-//       context.logger.error("Can not read the AWS_REGION environment variable or invalid value")
-//       tokenFactory = nil
-//       return
-//     }
+        // read the region from the environment variable
+        let region = Lambda.env("AWS_REGION").flatMap { Region(awsRegionName: $0) } ?? .eucentral1
+        self.logger.trace("Region: \(region)")
 
-//     let secretsManager = SecretsManager(secretName: secretName, region: region)
-//     guard let secret = try? await secretsManager.getSecret() else {
-//       context.logger.error("Can not read the \(secretName) secret in region: \(region)")
-//       tokenFactory = nil
-//       return
-//     }
-//     tokenFactory = TokenFactory(
-//       secretKey: secret.privateKey,
-//       keyId: secret.keyId,
-//       issuerId: secret.teamId)
-//   }
+        self.httpClient = musicAPIClient
 
-//   // the return value must be either APIGatewayV2Response or any Encodable struct
-//   func handle(_ event: APIGatewayV2Request, context: AWSLambdaRuntimeCore.LambdaContext)
-//     async throws -> APIGatewayV2Response
-//   {
-//     var header = HTTPHeaders()
-//     do {
-//       context.logger.debug("HTTP API Message received")
-//       context.logger.debug("Method: \(event.context.http.method.rawValue)")
-//       context.logger.debug("Path: \(event.rawPath)")
+        do {
+            let secretName = AppleMusicSecret.name
+            let secretsManager = try SecretsManager<AppleMusicSecret>(region: region, logger: logger)
+            let secret = try await secretsManager.getSecret(secretName: secretName)
 
-//       header["content-type"] = "application/json"
+            tokenFactory = JWTTokenFactory(
+                secretKey: secret.privateKey,
+                keyId: secret.keyId,
+                issuerId: secret.teamId
+            )
+        } catch {
+            logger.error("Can't read AppleMusic API key secret. Root cause: \(error)")
+            throw LambdaError.cantAccessMusicAPISecret(rootCause: error)
+        }
+    }
 
-//       // verify the action is a GET, the only one we accept
-//       guard event.context.http.method == HTTPMethod.GET else {
-//         return APIGatewayV2Response(
-//           statusCode: .notFound, headers: header, body: "Only GET methods are accepted")
-//       }
+    // the return value must be either APIGatewayV2Response or any Encodable struct
+    func handle(_ event: APIGatewayV2Request, context: LambdaContext) async throws -> APIGatewayV2Response {
+        var header = HTTPHeaders()
+        do {
+            self.logger.trace("HTTP API Message received")
+            self.logger.trace("Method: \(event.context.http.method.rawValue)")
+            self.logger.trace("Path: \(event.rawPath)")
 
-//       // verify the path is a well known one (as defined in the Endpoint enum)
-//       guard let path = Endpoint.from(path: event.rawPath) else {
-//         return APIGatewayV2Response(
-//           statusCode: .notFound, headers: header, body: "unknown path: \(event.rawPath)")
-//       }
+            header["content-type"] = "application/json"
 
-//       // route the request based on path
-//       var response: Data
-//       switch path {
-//       case .station:
-//         response = try encode(station())
-//       case .search:
-//         guard let term = event.queryStringParameters?["term"] else {
-//           return APIGatewayV2Response(
-//             statusCode: .badRequest,
-//             headers: header,
-//             body: "no 'term' query paramater")
-//         }
-//         response = try await search(for: term, context)
-//       }
+            // verify the action is a GET, the only one we accept
+            guard event.context.http.method == .get else {
+                return APIGatewayV2Response(
+                    statusCode: .notFound,
+                    headers: header,
+                    body: "Only GET methods are accepted"
+                )
+            }
 
-//       return APIGatewayV2Response(
-//         statusCode: .ok,
-//         headers: header,
-//         body: String(data: response, encoding: .utf8))
+            // verify the path is a well known one (as defined in the Endpoint enum)
+            guard let path = Maxi80Endpoint.from(path: event.rawPath) else {
+                return APIGatewayV2Response(
+                    statusCode: .notFound,
+                    headers: header,
+                    body: "unknown path: \(event.rawPath)"
+                )
+            }
 
-//     } catch {
-//       header["content-type"] = "text/plain"
-//       return APIGatewayV2Response(
-//         statusCode: .internalServerError, headers: header, body: "\(error.localizedDescription)")
-//     }
-//   }
+            // route the request based on path
+            var response: Data
+            switch path {
+            case .station:
+                response = try encode(station())
+            case .search:
+                guard let term = event.queryStringParameters["term"] else {
+                    return APIGatewayV2Response(
+                        statusCode: .badRequest,
+                        headers: header,
+                        body: "no 'term' query paramater"
+                    )
+                }
+                response = try await search(for: term)
+            }
 
-//   private func authorizationHeader(_ context: AWSLambdaRuntimeCore.LambdaContext) async throws
-//     -> [String: String]
-//   {
+            return APIGatewayV2Response(
+                statusCode: .ok,
+                headers: header,
+                body: String(data: response, encoding: .utf8)
+            )
 
-//     guard let tokenFactory = self.tokenFactory else {
-//       throw LambdaError.noTokenFactory(
-//         msg:
-//           "TokenFactory has not been initialized. This is likely because we couldn't access SecretsManager to retrieve the signing keys"
-//       )
-//     }
+        } catch {
+            header["content-type"] = "text/plain"
+            return APIGatewayV2Response(
+                statusCode: .internalServerError,
+                headers: header,
+                body: "\(error.localizedDescription)"
+            )
+        }
+    }
 
-//     // generate a new auth token if we have one that has expired
-//     // this is thread-safe because this struct is an actor
-//     var authTokenString = await self.tokenCache.token()
-//     if !(await tokenFactory.validateJWTString(token: authTokenString)) {
-//       context.logger.debug("No Apple Music Auth Token or it is expired, generating a new one")
-//       authTokenString = try? await tokenFactory.generateJWTString()
-//     } else {
-//       context.logger.debug("Re-using a valid Apple Music Auth Token")
-//     }
+    private func authorizationHeader() async throws -> [String: String] {
 
-//     guard let token = authTokenString else {
-//       throw LambdaError.noAuthenticationToken(
-//         msg: "Search: can not generate an authentication token")
-//     }
-//     await self.tokenCache.token(token)
-//     return ["Authorization": "Bearer \(token)"]
-//   }
+        let token: String
 
-//   func station() -> Station {
-//     return Station.default
-//   }
+        if let authToken = await self.tokenCache.token(),
+            await tokenFactory.validateJWTString(token: authToken)
+        {
+            // reuse the auth token when we have one and it is still valid
+            self.logger.debug("Re-using a valid Apple Music Auth Token")
+            token = authToken
+        } else {
+            // generate a new auth token if we have none or one that has expired
+            self.logger.debug("No Apple Music Auth Token or it is expired, generating a new one")
+            token = try await self.tokenFactory.generateJWTString()
+            await self.tokenCache.token(token)
+        }
+        return ["Authorization": "Bearer \(token)"]
+    }
 
-//   func search(for term: String, _ context: AWSLambdaRuntimeCore.LambdaContext) async throws -> Data
-//   {
+    private func station() -> Station {
+        Station.default
+    }
 
-//     let searchFields = AppleMusicSearchType.items(searchTypes: [.artists, .albums, .songs])
-//     let searchterms = AppleMusicSearchType.term(search: term)
-//     let (data, _) = try await httpClient.apiCall(
-//       url: AppleMusicEndpoint.search.url(args: [searchFields, searchterms]),
-//       headers: authorizationHeader(context)
-//     )
-//     return data
+    private func search(for term: String) async throws -> Data {
 
-//   }
+        let searchFields = AppleMusicSearchType.items(searchTypes: [.artists, .albums, .songs])
+        let searchterms = AppleMusicSearchType.term(search: term)
+        let (data, _) = try await httpClient.apiCall(
+            url: AppleMusicEndpoint.search.url(args: [searchFields, searchterms]),
+            headers: authorizationHeader()
+        )
+        return data
 
-//   func encode<T: Encodable>(_ data: T) throws -> Data {
-//     let encoder = JSONEncoder()
-//     return try! encoder.encode(data)
-//   }
-// }
+    }
+
+    private func encode<T: Encodable>(_ data: T) throws -> Data {
+        let encoder = JSONEncoder()
+        return try encoder.encode(data)
+    }
+
+    public static func main() async throws {
+        let musicAPIClient = MusicAPIClient()
+        let handler = try await Maxi80Lambda(musicAPIClient: musicAPIClient)
+        let runtime = LambdaRuntime(lambdaHandler: handler)
+        try await runtime.run()
+    }
+}

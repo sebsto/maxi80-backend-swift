@@ -1,0 +1,8 @@
+version = 0.1
+[release]
+[release.deploy]
+[release.deploy.parameters]
+stack_name = "maxi-80-backend-swift"
+region = "us-west-1"
+capabilities = "CAPABILITY_IAM"
+image_repositories = []

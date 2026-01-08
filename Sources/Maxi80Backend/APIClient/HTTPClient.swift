@@ -1,20 +1,22 @@
-//
-//  HTTPClient.swift
-//  Maxi80
-//
-//  Created by Stormacq, Sebastien on 14/04/2024.
-//
-
 import AsyncHTTPClient
-import Foundation
+import Logging
 import NIOCore
 import NIOFoundationCompat
 import NIOHTTP1
 
-// provide common code for all network clients
-public struct Maxi80HTTPClient: Sendable {
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import Foundation
+#endif
 
-    public init() {}
+// provide common code for all network clients
+public struct MusicAPIClient {
+
+    private let logger: Logger
+    public init(logger: Logger? = nil) {
+        self.logger = logger ?? Logger(label: "MusicAPIClient")
+    }
 
     private let standardHeaders: [String: String] = [
         "Content-Type": "application/json",
@@ -24,12 +26,12 @@ public struct Maxi80HTTPClient: Sendable {
     ]
 
     // generic API CALL method
-    // this is used by authentication API calls
     public func apiCall(
         url: URL,
         method: NIOHTTP1.HTTPMethod = .GET,
         body: Data? = nil,
-        headers: [String: String] = [:]
+        headers: [String: String] = [:],
+        timeout: Int64 = 10
     ) async throws -> (Data, HTTPClientResponse) {
 
         // let's add provided headers to our request (keeping new value in case of conflicts)
@@ -46,27 +48,25 @@ public struct Maxi80HTTPClient: Sendable {
             withHeaders: requestHeaders
         )
 
-        await logRequest(request)
+        await logger.request(request)
 
         // send request with that session
-        let response = try await HTTPClient.shared.execute(request, timeout: .seconds(10))
+        let response = try await HTTPClient.shared.execute(request, timeout: .seconds(timeout))
         guard response.status == .ok else {
-            log.error("\(response.status.reasonPhrase)")
-            log.debug("URLResponse : \(response.status)")
-            throw URLError(.badServerResponse)
+            logger.error("\(response.status.reasonPhrase)")
+            logger.trace("URLResponse : \(response.status)")
+            throw HTTPClientError.badServerResponse(status: response.status)
         }
 
-        let responseSize = Int(response.headers.first(name: "content-length") ?? "") ?? 0
-        var bytes = try? await response.body.collect(upTo: max(responseSize, 1024 * 1024 * 10))  //10 Mb maximum
-
-        guard let readableBytes = bytes?.readableBytes,
-            let data = bytes?.readData(length: readableBytes)
+        guard let responseSize = Int(response.headers.first(name: "content-length") ?? ""),
+            var bytes = try? await response.body.collect(upTo: max(responseSize, 1024 * 1024 * 10)),  //10 Mb maximum
+            let data = bytes.readData(length: bytes.readableBytes)
         else {
-            log.debug("No readable bytes in the response")
-            throw URLError(.zeroByteResource)
+            logger.debug("No readable bytes in the response")
+            throw HTTPClientError.zeroByteResource
         }
 
-        logResponse(response, data: data, error: nil)
+        logger.response(response, data: data, error: nil)
 
         return (data, response)
     }
@@ -101,4 +101,9 @@ public struct Maxi80HTTPClient: Sendable {
 
         return request
     }
+}
+
+enum HTTPClientError: Error {
+    case badServerResponse(status: HTTPResponseStatus)
+    case zeroByteResource
 }
