@@ -10,3 +10,4 @@ DerivedData/
 .vscode
 .swiftpm
 Secret.swift
+.aws-sam

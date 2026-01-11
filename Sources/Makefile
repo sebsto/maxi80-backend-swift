@@ -3,7 +3,7 @@ format:
 build:
 	swift package archive --allow-network-connections docker --disable-docker-image-update --target Maxi80Lambda
 deploy:
-	sam deploy --config-env dev
+	sam deploy --profile maxi80 --region eu-central-1 --stack-name Maxi80Backend-2025 --resolve-s3
 
 BUILD_DIR := .aws-sam/build
 

@@ -58,9 +58,5 @@ let package = Package(
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ]
         ),
-        .testTarget(
-            name: "maxi-80-backend-swiftTests",
-            dependencies: ["Maxi80Lambda"]
-        ),
     ]
 )

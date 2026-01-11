@@ -1,0 +1,22 @@
+# Ignore Swift build artifacts and checkouts
+.build/
+.swiftpm/
+Package.resolved
+
+# Ignore dependency checkouts that might have missing files
+.build/checkouts/
+
+# Ignore common development files
+.DS_Store
+.vscode/
+.git/
+.gitignore
+
+# Ignore format configuration files in dependencies
+**/.swiftformat
+**/Benchmarks/
+
+# Keep only source files and essential build files
+!Sources/
+!Package.swift
+!Makefile

@@ -1,0 +1,13 @@
+-------------------------------------------------------------------------------------------------
+Key                 AlertsTopicArn                                                              
+Description         SNS Topic ARN for monitoring alerts                                         
+Value               arn:aws:sns:eu-central-1:743602823695:Maxi80-API-Alerts                     
+
+Key                 ApiUrl                                                                      
+Description         API Gateway endpoint URL                                                    
+Value               https://6vcu20yo5c.execute-api.eu-central-1.amazonaws.com/Prod/             
+
+Key                 ApiKey                                                                      
+Description         API Key for authentication                                                  
+Value               zpglqv3iwj    
+-------------------------------------------------------------------------------------------------

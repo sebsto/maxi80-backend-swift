@@ -7,16 +7,158 @@ Resources:
       Description: This function provides the backend to the Maxi80 iOS app
       Type: AWS::Serverless::Function
       Properties:
-         Handler: Provided
+         Handler: bootstrap
          Environment:
             Variables:
-               SECRETS: maxi80_secrets
-               LOG_LEVEL: debug
+               SECRETS: Maxi80-AppleMusicKey
+               LOG_LEVEL: trace
          Architectures:
             - arm64
-         CodeUri: .build/plugins/AWSLambdaPackager/outputs/AWSLambdaPackager/Maxi80Lambda/Maxi80Lambda.zip
+         CodeUri: .
          Runtime: provided.al2
          Events:
-            HttpApiEvent:
-               Type: HttpApi
+            ApiEvent:
+               Type: Api
+               Properties:
+                  Path: /{proxy+}
+                  Method: ANY
+                  Auth:
+                     ApiKeyRequired: true
+      Metadata:
+         BuildMethod: makefile
 
+   # API Key for client authentication
+   Maxi80ApiKey:
+      Type: AWS::ApiGateway::ApiKey
+      Properties:
+         Name: Maxi80ApiKey
+         Description: API Key for Maxi80 Mobile app
+         Enabled: true
+
+   # Usage Plan with throttling
+   Maxi80UsagePlan:
+      Type: AWS::ApiGateway::UsagePlan
+      Properties:
+         UsagePlanName: Maxi80UsagePlan
+         Description: Usage plan for Maxi80 API
+         Throttle:
+            BurstLimit: 50
+            RateLimit: 10
+         Quota:
+            Limit: 10000       # 10,000 requests per day
+            Period: DAY
+         ApiStages:
+            - ApiId: !Ref ServerlessRestApi
+              Stage: !Ref ServerlessRestApiProdStage
+
+   # Link API Key to Usage Plan
+   Maxi80UsagePlanKey:
+      Type: AWS::ApiGateway::UsagePlanKey
+      Properties:
+         KeyId: !Ref Maxi80ApiKey
+         KeyType: API_KEY
+         UsagePlanId: !Ref Maxi80UsagePlan
+
+   # SNS Topic for alerts
+   Maxi80AlertsTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+         TopicName: Maxi80-API-Alerts
+         DisplayName: Maxi80 API Monitoring Alerts
+
+   # CloudWatch Alarm for API Gateway 4XX errors (throttling returns 429)
+   ApiGateway4XXAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+         AlarmName: Maxi80-API-4XX-Errors
+         AlarmDescription: Alert when API Gateway returns 4XX errors (including throttling)
+         MetricName: 4XXError
+         Namespace: AWS/ApiGateway
+         Statistic: Sum
+         Period: 300  # 5 minutes
+         EvaluationPeriods: 2
+         Threshold: 10
+         ComparisonOperator: GreaterThanThreshold
+         Dimensions:
+            - Name: ApiName
+              Value: !Ref ServerlessRestApi
+            - Name: Stage
+              Value: Prod
+         AlarmActions:
+            - !Ref Maxi80AlertsTopic
+
+   # CloudWatch Alarm for high request count (approaching quota)
+   ApiGatewayHighRequestCountAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+         AlarmName: Maxi80-API-High-Request-Count
+         AlarmDescription: Alert when API request count is high (80% of daily quota)
+         MetricName: Count
+         Namespace: AWS/ApiGateway
+         Statistic: Sum
+         Period: 3600  # 1 hour
+         EvaluationPeriods: 1
+         Threshold: 8000  # 80% of 10,000 daily quota
+         ComparisonOperator: GreaterThanThreshold
+         Dimensions:
+            - Name: ApiName
+              Value: !Ref ServerlessRestApi
+            - Name: Stage
+              Value: Prod
+         AlarmActions:
+            - !Ref Maxi80AlertsTopic
+
+   # CloudWatch Alarm for Lambda errors
+   LambdaErrorAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+         AlarmName: Maxi80-Lambda-Errors
+         AlarmDescription: Alert when Lambda function has errors
+         MetricName: Errors
+         Namespace: AWS/Lambda
+         Statistic: Sum
+         Period: 300  # 5 minutes
+         EvaluationPeriods: 1
+         Threshold: 1
+         ComparisonOperator: GreaterThanOrEqualToThreshold
+         Dimensions:
+            - Name: FunctionName
+              Value: !Ref Maxi80Lambda
+         AlarmActions:
+            - !Ref Maxi80AlertsTopic
+
+   # CloudWatch Alarm for Lambda duration (timeout warning)
+   LambdaDurationAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+         AlarmName: Maxi80-Lambda-High-Duration
+         AlarmDescription: Alert when Lambda execution time is high
+         MetricName: Duration
+         Namespace: AWS/Lambda
+         Statistic: Average
+         Period: 300  # 5 minutes
+         EvaluationPeriods: 2
+         Threshold: 25000  # 25 seconds (assuming 30s timeout)
+         ComparisonOperator: GreaterThanThreshold
+         Dimensions:
+            - Name: FunctionName
+              Value: !Ref Maxi80Lambda
+         AlarmActions:
+            - !Ref Maxi80AlertsTopic
+
+Outputs:
+   ApiUrl:
+      Description: API Gateway endpoint URL
+      Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+   ApiKey:
+      Description: API Key for authentication
+      Value: !Ref Maxi80ApiKey
+   AlertsTopicArn:
+      Description: SNS Topic ARN for monitoring alerts
+      Value: !Ref Maxi80AlertsTopic
+
+# After initial deployment 
+# aws sns subscribe \
+#   --topic-arn <AlertsTopicArn-from-output> \
+#   --protocol email \
+#   --notification-endpoint your-email@example.com

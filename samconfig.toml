@@ -3,6 +3,18 @@ version = 0.1
 [release.deploy]
 [release.deploy.parameters]
 stack_name = "maxi-80-backend-swift"
-region = "us-west-1"
+region = "eu-central-1"
 capabilities = "CAPABILITY_IAM"
 image_repositories = []
+
+[dev.deploy.parameters]
+stack_name = "Maxi80Backend-2025"
+resolve_s3 = true
+s3_prefix = "Maxi80Backend-2025"
+region = "eu-central-1"
+profile = "maxi80"
+capabilities = "CAPABILITY_IAM"
+image_repositories = []
+
+[dev.global.parameters]
+region = "eu-central-1"
