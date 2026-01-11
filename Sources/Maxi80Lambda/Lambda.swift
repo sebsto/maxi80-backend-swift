@@ -45,7 +45,7 @@ struct Maxi80Lambda: LambdaHandler {
         self.httpClient = musicAPIClient
 
         do {
-            let secretName = AppleMusicSecret.name
+            let secretName = Lambda.env("SECRETS") ?? "Maxi80-AppleMusicKey"
             let secretsManager = try SecretsManager<AppleMusicSecret>(region: region, logger: logger)
             let secret = try await secretsManager.getSecret(secretName: secretName)
 
@@ -60,19 +60,19 @@ struct Maxi80Lambda: LambdaHandler {
         }
     }
 
-    // the return value must be either APIGatewayV2Response or any Encodable struct
-    func handle(_ event: APIGatewayV2Request, context: LambdaContext) async throws -> APIGatewayV2Response {
+    // the return value must be either APIGatewayResponse or any Encodable struct
+    func handle(_ event: APIGatewayRequest, context: LambdaContext) async throws -> APIGatewayResponse {
         var header = HTTPHeaders()
         do {
             self.logger.trace("HTTP API Message received")
-            self.logger.trace("Method: \(event.context.http.method.rawValue)")
-            self.logger.trace("Path: \(event.rawPath)")
+            self.logger.trace("Method: \(event.httpMethod.rawValue)")
+            self.logger.trace("Path: \(event.path)")
 
             header["content-type"] = "application/json"
 
             // verify the action is a GET, the only one we accept
-            guard event.context.http.method == .get else {
-                return APIGatewayV2Response(
+            guard event.httpMethod == .get else {
+                return APIGatewayResponse(
                     statusCode: .notFound,
                     headers: header,
                     body: "Only GET methods are accepted"
@@ -80,11 +80,11 @@ struct Maxi80Lambda: LambdaHandler {
             }
 
             // verify the path is a well known one (as defined in the Endpoint enum)
-            guard let path = Maxi80Endpoint.from(path: event.rawPath) else {
-                return APIGatewayV2Response(
+            guard let path = Maxi80Endpoint.from(path: event.path) else {
+                return APIGatewayResponse(
                     statusCode: .notFound,
                     headers: header,
-                    body: "unknown path: \(event.rawPath)"
+                    body: "unknown path: \(event.path)"
                 )
             }
 
@@ -95,7 +95,7 @@ struct Maxi80Lambda: LambdaHandler {
                 response = try encode(station())
             case .search:
                 guard let term = event.queryStringParameters["term"] else {
-                    return APIGatewayV2Response(
+                    return APIGatewayResponse(
                         statusCode: .badRequest,
                         headers: header,
                         body: "no 'term' query paramater"
@@ -104,7 +104,7 @@ struct Maxi80Lambda: LambdaHandler {
                 response = try await search(for: term)
             }
 
-            return APIGatewayV2Response(
+            return APIGatewayResponse(
                 statusCode: .ok,
                 headers: header,
                 body: String(data: response, encoding: .utf8)
@@ -112,7 +112,7 @@ struct Maxi80Lambda: LambdaHandler {
 
         } catch {
             header["content-type"] = "text/plain"
-            return APIGatewayV2Response(
+            return APIGatewayResponse(
                 statusCode: .internalServerError,
                 headers: header,
                 body: "\(error.localizedDescription)"

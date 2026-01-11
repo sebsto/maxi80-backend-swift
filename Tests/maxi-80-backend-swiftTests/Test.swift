@@ -1,2 +1,0 @@
-@TestSuite()
-struct Test {}

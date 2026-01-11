@@ -15,7 +15,7 @@ struct StoreSecrets: AsyncParsableCommand {
         )
 
         // Secret() lives in a separate file not saved to git
-        let arn = try await sm.storeSecret(secret: Secret.get(), secretName: AppleMusicSecret.name)
+        let arn = try await sm.storeSecret(secret: Secret.appleMusicSecret, secretName: Secret.name)
         print("✅ your secret is stored. Arn = \(arn)")
     }
 }
@@ -34,7 +34,7 @@ struct GetSecrets: AsyncParsableCommand {
         )
 
         // Secret() lives in a separate file not saved to git
-        let secret = try await sm.getSecret(secretName: AppleMusicSecret.name)
+        let secret = try await sm.getSecret(secretName: Secret.name)
         print("✅ your secret is \(secret)")
     }
 }

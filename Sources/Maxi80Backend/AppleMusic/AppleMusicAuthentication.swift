@@ -9,9 +9,6 @@ import Foundation
 /// Use this struct to store the secret in AWS SecretsManager
 public struct AppleMusicSecret: Codable, Sendable, CustomStringConvertible {
 
-    // the name to store this secret on a ssecret tore manager
-    public static let name = "Maxi80-AppleMusicKey"
-
     public var description: String { "\nTeam Id: \(teamId)\nKey Id: \(keyId)\nPrivate key: -shuuuut, it's a secret—" }
 
     public init(privateKey: String, teamId: String, keyId: String) {
