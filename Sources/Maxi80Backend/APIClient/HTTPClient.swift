@@ -14,8 +14,10 @@ import Foundation
 public struct MusicAPIClient {
 
     private let logger: Logger
-    public init(logger: Logger? = nil) {
-        self.logger = logger ?? Logger(label: "MusicAPIClient")
+    public init(logger: Logger) {
+        var logger = logger 
+        logger[metadataKey: "Component"] = "MusicAPIClient"
+        self.logger = logger
     }
 
     private let standardHeaders: [String: String] = [

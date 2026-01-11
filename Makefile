@@ -15,8 +15,9 @@ call-station:
 
 call-search:
 	$(eval API_KEY := $(shell aws apigateway get-api-key --api-key zpglqv3iwj --include-value --region eu-central-1 --profile maxi80 --query "value" --output text))
-	@TERM="Pink Floyd-The Wall" curl -X GET \
-  "https://6vcu20yo5c.execute-api.eu-central-1.amazonaws.com/Prod/search?term=$(TERM)" \
+	$(eval SEARCH_TERM := $(shell echo 'Pink Floyd - The wall' | jq -sRr @uri))
+	@curl -X GET \
+  "https://6vcu20yo5c.execute-api.eu-central-1.amazonaws.com/Prod/search?term=$(SEARCH_TERM)" \
   -H "x-api-key: $(API_KEY)" \
   -H "Accept: application/json"
 

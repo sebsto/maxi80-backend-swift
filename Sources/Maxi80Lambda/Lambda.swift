@@ -30,10 +30,10 @@ struct Maxi80Lambda: LambdaHandler {
         }
     }
 
-    init(musicAPIClient: MusicAPIClient) async throws {
+    init(musicAPIClient: MusicAPIClient? = nil, logger: Logger? = nil) async throws {
 
         // read the LOG_LEVEL and configure the logger
-        var logger = Logger(label: "Maxi80Lambda")
+        var logger = logger ?? Logger(label: "Maxi80Lambda")
         logger.logLevel = Lambda.env("LOG_LEVEL").flatMap { Logger.Level(rawValue: $0) } ?? .error
         logger.trace("Log level env var : \(logger.logLevel)")
         self.logger = logger
@@ -42,7 +42,7 @@ struct Maxi80Lambda: LambdaHandler {
         let region = Lambda.env("AWS_REGION").flatMap { Region(awsRegionName: $0) } ?? .eucentral1
         self.logger.trace("Region: \(region)")
 
-        self.httpClient = musicAPIClient
+        self.httpClient = musicAPIClient ?? MusicAPIClient(logger: self.logger)
 
         do {
             let secretName = Lambda.env("SECRETS") ?? "Maxi80-AppleMusicKey"
@@ -161,8 +161,7 @@ struct Maxi80Lambda: LambdaHandler {
     }
 
     public static func main() async throws {
-        let musicAPIClient = MusicAPIClient()
-        let handler = try await Maxi80Lambda(musicAPIClient: musicAPIClient)
+        let handler = try await Maxi80Lambda()
         let runtime = LambdaRuntime(lambdaHandler: handler)
         try await runtime.run()
     }
