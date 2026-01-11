@@ -19,7 +19,7 @@ struct CLI: AsyncParsableCommand {
         // With language support for type-level introspection, this could be
         // provided by automatically finding nested `ParsableCommand` types.
         subcommands: [
-            StoreSecrets.self, GetSecrets.self,
+            StoreSecrets.self, GetSecrets.self, Search.self,
         ]
 
         // A default subcommand, when provided, is automatically selected if a
