@@ -10,8 +10,19 @@ import FoundationEssentials
 import Foundation
 #endif
 
+// Protocol for dependency injection and testing
+public protocol HTTPClientProtocol {
+    func apiCall(
+        url: URL,
+        method: NIOHTTP1.HTTPMethod,
+        body: Data?,
+        headers: [String: String],
+        timeout: Int64
+    ) async throws -> (Data, HTTPClientResponse)
+}
+
 // provide common code for all network clients
-public struct MusicAPIClient {
+public struct MusicAPIClient: HTTPClientProtocol {
 
     private let logger: Logger
     public init(logger: Logger) {
@@ -76,7 +87,7 @@ public struct MusicAPIClient {
     // prepare an HTTPClientRequest for a given url, method, body, and headers
     // https://softwareengineering.stackexchange.com/questions/100959/how-do-you-unit-test-private-methods
     // by OOP design it should be private.  Make it internal (default) for testing
-    private func request(
+    internal func request(
         for url: URL,
         method: NIOHTTP1.HTTPMethod = .GET,
         withBody body: Data? = nil,
@@ -105,7 +116,7 @@ public struct MusicAPIClient {
     }
 }
 
-enum HTTPClientError: Error {
+public enum HTTPClientError: Error {
     case badServerResponse(status: HTTPResponseStatus)
     case zeroByteResource
 }

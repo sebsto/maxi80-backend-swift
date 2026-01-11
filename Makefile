@@ -1,9 +1,11 @@
 format:
-	swift format -i -r Package.swift Sources
+	swift format -i -r Package.swift Sources Tests
 build:
 	swift package --allow-network-connections docker archive --disable-docker-image-update --products Maxi80Lambda
 	cp .build/plugins/AWSLambdaPackager/outputs/AWSLambdaPackager/Maxi80Lambda/bootstrap .aws-sam/build/Maxi80Lambda/bootstrap  
 	cp template.yaml .aws-sam/build/template.yaml
+test:
+	swift test
 deploy:
 	sam deploy --config-env dev
 call-station:

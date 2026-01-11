@@ -37,8 +37,9 @@ public enum AppleMusicEndpoint: String, CaseIterable, Sendable {
 
     public func url(args: [URLQueryItem] = []) -> URL {
         var result = baseURI().appendingPathComponent(self.rawValue)
-        result.append(queryItems: args)
+        if !args.isEmpty {
+            result.append(queryItems: args)
+        }
         return result
-
     }
 }

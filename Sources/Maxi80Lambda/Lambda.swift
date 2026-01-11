@@ -13,8 +13,8 @@ import Foundation
 @main
 struct Maxi80Lambda: LambdaHandler {
 
-    private let tokenFactory: JWTTokenFactory
-    private let httpClient: MusicAPIClient
+    private let tokenFactory: JWTTokenFactoryProtocol
+    private let httpClient: HTTPClientProtocol
     private let tokenCache = TokenCache()
     private let logger: Logger
 
@@ -30,7 +30,11 @@ struct Maxi80Lambda: LambdaHandler {
         }
     }
 
-    init(musicAPIClient: MusicAPIClient? = nil, logger: Logger? = nil) async throws {
+    init(
+        musicAPIClient: HTTPClientProtocol? = nil, 
+        tokenFactory: JWTTokenFactoryProtocol? = nil,
+        logger: Logger? = nil
+    ) async throws {
 
         // read the LOG_LEVEL and configure the logger
         var logger = logger ?? Logger(label: "Maxi80Lambda")
@@ -44,19 +48,23 @@ struct Maxi80Lambda: LambdaHandler {
 
         self.httpClient = musicAPIClient ?? MusicAPIClient(logger: self.logger)
 
-        do {
-            let secretName = Lambda.env("SECRETS") ?? "Maxi80-AppleMusicKey"
-            let secretsManager = try SecretsManager<AppleMusicSecret>(region: region, logger: logger)
-            let secret = try await secretsManager.getSecret(secretName: secretName)
+        if let tokenFactory = tokenFactory {
+            self.tokenFactory = tokenFactory
+        } else {
+            do {
+                let secretName = Lambda.env("SECRETS") ?? "Maxi80-AppleMusicKey"
+                let secretsManager = try SecretsManager<AppleMusicSecret>(region: region, logger: logger)
+                let secret = try await secretsManager.getSecret(secretName: secretName)
 
-            tokenFactory = JWTTokenFactory(
-                secretKey: secret.privateKey,
-                keyId: secret.keyId,
-                issuerId: secret.teamId
-            )
-        } catch {
-            logger.error("Can't read AppleMusic API key secret. Root cause: \(error)")
-            throw LambdaError.cantAccessMusicAPISecret(rootCause: error)
+                self.tokenFactory = JWTTokenFactory(
+                    secretKey: secret.privateKey,
+                    keyId: secret.keyId,
+                    issuerId: secret.teamId
+                )
+            } catch {
+                logger.error("Can't read AppleMusic API key secret. Root cause: \(error)")
+                throw LambdaError.cantAccessMusicAPISecret(rootCause: error)
+            }
         }
     }
 
@@ -149,7 +157,10 @@ struct Maxi80Lambda: LambdaHandler {
         let searchterms = AppleMusicSearchType.term(search: term)
         let (data, _) = try await httpClient.apiCall(
             url: AppleMusicEndpoint.search.url(args: [searchFields, searchterms]),
-            headers: authorizationHeader()
+            method: .GET,
+            body: nil,
+            headers: try await authorizationHeader(),
+            timeout: 10
         )
         return data
 

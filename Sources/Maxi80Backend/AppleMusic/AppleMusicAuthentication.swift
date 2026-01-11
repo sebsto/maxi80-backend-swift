@@ -6,6 +6,12 @@ import FoundationEssentials
 import Foundation
 #endif
 
+/// Protocol for JWT token operations
+public protocol JWTTokenFactoryProtocol {
+    func generateJWTString() async throws -> String
+    func validateJWTString(token: String?) async -> Bool
+}
+
 /// Use this struct to store the secret in AWS SecretsManager
 public struct AppleMusicSecret: Codable, Sendable, CustomStringConvertible {
 
@@ -22,7 +28,7 @@ public struct AppleMusicSecret: Codable, Sendable, CustomStringConvertible {
 }
 
 /// Use this struct to generate JWT Tokens and authenticate API calls to Apple Music
-public struct JWTTokenFactory {
+public struct JWTTokenFactory: JWTTokenFactoryProtocol {
 
     private let secretKey: String
     private let keyId: String

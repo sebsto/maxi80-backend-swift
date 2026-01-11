@@ -58,5 +58,18 @@ let package = Package(
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ]
         ),
+        .testTarget(
+            name: "Maxi80BackendTests",
+            dependencies: [
+                "Maxi80Backend",
+                "Maxi80Lambda",
+                .product(name: "AWSLambdaEvents", package: "swift-aws-lambda-events"),
+                .product(
+                    name: "Logging",
+                    package: "swift-log",
+                    condition: .when(platforms: [.linux, .macOS])
+                ),
+            ]
+        ),
     ]
 )
