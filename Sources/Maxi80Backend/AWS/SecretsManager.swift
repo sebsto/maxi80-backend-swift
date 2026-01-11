@@ -26,7 +26,7 @@ public struct SecretsManager<S: Codable> {
         self.logger = logger
 
         // create a SecretsManager configuration
-        let region = region
+        self.region = region
         guard
             let config = try? SecretsManagerClient.SecretsManagerClientConfiguration(
                 region: region.rawValue
