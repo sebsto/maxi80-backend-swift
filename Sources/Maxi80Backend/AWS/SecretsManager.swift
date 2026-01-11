@@ -15,6 +15,7 @@ public struct SecretsManager<S: Codable> {
     private let smClient: SecretsManagerClient
     private let decoder = JSONDecoder()
     private let encoder = JSONEncoder()
+    private let region: Region
 
     private let logger: Logger
 
@@ -25,7 +26,7 @@ public struct SecretsManager<S: Codable> {
         self.logger = logger
 
         // create a SecretsManager configuration
-
+        let region = region
         guard
             let config = try? SecretsManagerClient.SecretsManagerClientConfiguration(
                 region: region.rawValue
@@ -56,7 +57,11 @@ public struct SecretsManager<S: Codable> {
         // Get the secret value
         logger.trace("Retrieving secret: \(secretName)")
         guard let response = try? await self.smClient.getSecretValue(input: request) else {
-            throw SecretsManagerError.invalidResponse(reason: "Error calling SecretsManager client")
+            throw SecretsManagerError.invalidResponse(reason: """
+            Error calling SecretsManager client. Verify the following:
+            1/ the secret \(secretName) exists in \(region) 
+            2/ the calling code has secretsmanager:GetSecretValue IAM permission.
+            """)
         }
         logger.trace("Secret retrieved")
 

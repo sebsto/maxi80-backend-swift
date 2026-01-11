@@ -4,6 +4,23 @@ build:
 	swift package archive --allow-network-connections docker --disable-docker-image-update --target Maxi80Lambda
 deploy:
 	sam deploy --config-env dev
+call-station:
+	$(eval API_KEY := $(shell aws apigateway get-api-key --api-key zpglqv3iwj --include-value --region eu-central-1 --profile maxi80 --query "value" --output text))
+	curl -X GET \
+  "https://6vcu20yo5c.execute-api.eu-central-1.amazonaws.com/Prod/station" \
+  -H "x-api-key: $(API_KEY)" \
+  -H "Accept: application/json"
+
+call-search:
+	$(eval API_KEY := $(shell aws apigateway get-api-key --api-key zpglqv3iwj --include-value --region eu-central-1 --profile maxi80 --query "value" --output text))
+	TERM="Pink Floyd-The Wall" curl -X GET \
+  "https://6vcu20yo5c.execute-api.eu-central-1.amazonaws.com/Prod/search?term=$(TERM)" \
+  -H "x-api-key: $(API_KEY)" \
+  -H "Accept: application/json"
+
+# Helper target to get just the API key
+get-api-key:
+	@aws apigateway get-api-key --api-key zpglqv3iwj --include-value --region eu-central-1 --profile maxi80 --query "value" --output text
 
 BUILD_DIR := .aws-sam/build
 

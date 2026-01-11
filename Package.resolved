@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/awslabs/aws-sdk-swift.git",
       "state" : {
-        "revision" : "b9d92468982ea75484fa17f243ceb5eeeabf4445",
-        "version" : "1.6.27"
+        "revision" : "d08b48a3c5b735aa1c48d852f2f18dd6128ab7a0",
+        "version" : "1.6.31"
       }
     },
     {
@@ -132,8 +132,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/awslabs/swift-aws-lambda-runtime",
       "state" : {
-        "revision" : "4b4054d1c4841b5e4614ee52a01602ed2a3c739c",
-        "version" : "2.5.0"
+        "revision" : "634c36e5d3f8fb113153fccf817492baa411ff50",
+        "version" : "2.5.1"
       }
     },
     {
@@ -213,8 +213,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio.git",
       "state" : {
-        "revision" : "a1605a3303a28e14d822dec8aaa53da8a9490461",
-        "version" : "2.92.0"
+        "revision" : "e3d5c560e0a6bfa391a00e857aa28ad52a41fe8d",
+        "version" : "2.92.1"
       }
     },
     {
