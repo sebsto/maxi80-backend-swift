@@ -13,7 +13,7 @@ struct CLI: AsyncParsableCommand {
         commandName: "Maxi80CLI",
 
         // Optional abstracts and discussions are used for help output.
-        abstract: "A utility to download and install interact with Maxi80 backend API",
+        abstract: "A utility to interact with Maxi80 backend API",
 
         // Pass an array to `subcommands` to set up a nested tree of subcommands.
         // With language support for type-level introspection, this could be
