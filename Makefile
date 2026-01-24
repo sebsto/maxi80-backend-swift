@@ -1,13 +1,17 @@
 format:
 	swift format -i -r Package.swift Sources Tests
+
 build:
 	swift package --allow-network-connections docker archive --disable-docker-image-update --products Maxi80Lambda
 	cp .build/plugins/AWSLambdaPackager/outputs/AWSLambdaPackager/Maxi80Lambda/bootstrap .aws-sam/build/Maxi80Lambda/bootstrap  
 	cp template.yaml .aws-sam/build/template.yaml
+	
 test:
 	swift test
+
 deploy:
 	sam deploy --config-env dev
+
 call-station:
 	$(eval API_KEY := $(shell aws apigateway get-api-key --api-key zpglqv3iwj --include-value --region eu-central-1 --profile maxi80 --query "value" --output text))
 	@curl -X GET \
