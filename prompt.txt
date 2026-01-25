@@ -1,0 +1,21 @@
+I want to add a Maxi80APIClient in the Maxi80backend project. The goal is to include it as an easy to use client package in the Maxi80 iOS app. I want the cleint to offcer highlevel API what is provided by the Maxi80 backend API and what is exposed on the APIGateway. I want to client to use the API key (OK to be hardcoded at the moment)
+
+==
+
+I want you to write a swift function that accepts a strings and returns the artists name and song title (as optional strings). you have input strings examples in the file metadata.txt. Write code that favour readability and maintanibility. 
+The general rule, as you can observe in the example input strings is that the format is "artist - title". But there are a couple of exeptions I can see:
+- sometimes the separator is not " - " but just "-"
+- sometimes the're two separators " - ". The last one delimits the title
+- When the artist is Maxi80 or "Maxi 80" - always return tbe same artist name "Maxi80"
+- When there is no separators at all, use "Maxi80" as artist name and use the full text as title.
+- when there is something in between paranthesis at the end of the title, it can be ignored
+Write unit test that checks all these rules based on the example data I provided as input
+
+==
+
+in the data directory write a swift executable script (with a shebang) to parse each line in metadatdata.txt with the new function you wrote and write a script that invokes "swift run Maxi80CLI --profile maxi80 --region eu-central-1 search --types songs "Toto - Stop loving you"" or the Swift API directly. The goals is to collect an apple music search result JSON file for each song and store them as separate files for further tests and analysys
+
+==
+
+now modify the lambda function. At the moment, it returns whatever has been returned by the AppleMusic API. . Create a model (in a new target to be shared with the client). The model will be Name Maxi80Searchresult. At the moment it will just contain an URL as a string. The Lambda function will use the new metadata parser if artists name is Maxi80 or nil, it doesn't search AppleMusic
+ and returned an hardcoded URL available in Sttaion.swift

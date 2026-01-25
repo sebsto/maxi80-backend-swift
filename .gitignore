@@ -11,3 +11,5 @@ DerivedData/
 .swiftpm
 Secret.swift
 .aws-sam
+data/search_results
+data/apple_music_results

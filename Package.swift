@@ -13,6 +13,8 @@ let package = Package(
         .executable(name: "Maxi80Lambda", targets: ["Maxi80Lambda"]),
         .library(name: "Maxi80Backend", targets: ["Maxi80Backend"]),
         .executable(name: "Maxi80CLI", targets: ["Maxi80CLI"]),
+        .executable(name: "ParseMetadata", targets: ["ParseMetadata"]),
+        .executable(name: "CollectAppleMusic", targets: ["CollectAppleMusic"]),
     ],
     dependencies: [
         .package(url: "https://github.com/awslabs/swift-aws-lambda-runtime", from: "2.5.0"),
@@ -57,6 +59,14 @@ let package = Package(
                 "Maxi80Backend",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ]
+        ),
+        .executableTarget(
+            name: "ParseMetadata",
+            dependencies: ["Maxi80Backend"]
+        ),
+        .executableTarget(
+            name: "CollectAppleMusic",
+            dependencies: ["Maxi80Backend"]
         ),
         .testTarget(
             name: "Maxi80BackendTests",
