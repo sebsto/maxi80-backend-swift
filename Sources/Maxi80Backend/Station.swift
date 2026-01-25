@@ -6,6 +6,7 @@ public struct Station: Codable, Sendable {
     public let longDesc: String
     public let websiteUrl: String
     public let donationUrl: String
+    public let defaultCoverUrl: String
     public static let `default` = Station(
         name: "Maxi 80",
         streamUrl: "https://audio1.maxi80.com",
@@ -13,7 +14,8 @@ public struct Station: Codable, Sendable {
         shortDesc: "La radio de toute une génération",
         longDesc: "Le meilleur de la musique des années 80",
         websiteUrl: "https://maxi80.com",
-        donationUrl: "https://www.maxi80.com/paypal.htm"
+        donationUrl: "https://www.maxi80.com/paypal.htm",
+        defaultCoverUrl: "file://maxi80_nocover-b.png"
     )
 
 }
