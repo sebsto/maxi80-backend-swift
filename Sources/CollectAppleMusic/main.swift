@@ -76,8 +76,9 @@ for (index, line) in lines.enumerated() {
         searchQuery = line
     }
 
+    // skip lines starting with Maxi80
     if searchQuery.starts(with: "Maxi80") {
-        break
+        continue
     }
     
     // Escape quotes for shell command
@@ -85,11 +86,12 @@ for (index, line) in lines.enumerated() {
     
     let command = "swift run Maxi80CLI --profile maxi80 --region eu-central-1 search --types songs \"\(escapedQuery)\""
     
-    print("[\(index + 1)/\(lines.count)] Searching: \(searchQuery)")
+    let offset = 0
+    print("[\(index + 1 + offset)/\(lines.count)] Searching: \(searchQuery)")
     
     let result = runCommand(command)
     
-    let outputFile = "\(outputDir)/\(String(format: "%03d", index + 1))_\(searchQuery.replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: ":", with: "_")).json"
+    let outputFile = "\(outputDir)/\(String(format: "%03d", index + 1 + offset))_\(searchQuery.replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: ":", with: "_")).json"
     
     if result.exitCode == 0 {
         try result.output.write(to: URL(fileURLWithPath: outputFile), atomically: true, encoding: .utf8)
