@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Format Swift on Save",
+  "description": "Automatically runs make format to reformat Swift files whenever they are saved",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "*.swift"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Run `make format` to format the Swift files that were just saved"
+  }
+}
