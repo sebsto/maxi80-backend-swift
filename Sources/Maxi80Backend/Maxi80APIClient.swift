@@ -12,7 +12,37 @@ public protocol URLSessionProtocol {
     func data(for request: URLRequest) async throws -> (Data, URLResponse)
 }
 
+#if canImport(FoundationNetworking)
+// Linux-specific error type
+enum URLSessionError: Error {
+    case badServerResponse
+}
+
+// Linux implementation using continuation-based approach
+extension URLSession: URLSessionProtocol {
+    public func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+        try await withCheckedThrowingContinuation { continuation in
+            let task = self.dataTask(with: request) { data, response, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+
+                guard let data = data, let response = response else {
+                    continuation.resume(throwing: URLSessionError.badServerResponse)
+                    return
+                }
+
+                continuation.resume(returning: (data, response))
+            }
+            task.resume()
+        }
+    }
+}
+#else
+// macOS/iOS implementation uses native async/await
 extension URLSession: URLSessionProtocol {}
+#endif
 
 public class Maxi80APIClient {
     private let baseURL: URL

@@ -61,7 +61,6 @@ public final class MockHTTPClient: HTTPClientProtocol, @unchecked Sendable {
         }
 
         let data = responseData[currentIndex]
-        let status = responseStatuses[currentIndex]
         currentIndex += 1
 
         // Create a real response using httpbin.org (only for successful responses)
