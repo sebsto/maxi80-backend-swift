@@ -11,35 +11,35 @@ func runCommand(_ command: String) -> (output: String, exitCode: Int32) {
     let process = Process()
     let outputPipe = Pipe()
     let errorPipe = Pipe()
-    
+
     process.standardOutput = outputPipe
     process.standardError = errorPipe
     process.arguments = ["-c", command]
     process.executableURL = URL(fileURLWithPath: "/bin/bash")
-    
+
     do {
         try process.run()
         process.waitUntilExit()
-        
+
         let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
         let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-        
+
         let output = String(data: outputData, encoding: .utf8) ?? ""
         let error = String(data: errorData, encoding: .utf8) ?? ""
-        
+
         // Extract only JSON from output (starts with '{' or '[')
         let lines = output.components(separatedBy: .newlines)
         let jsonLines = lines.drop { line in
             let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
             return !trimmed.hasPrefix("{") && !trimmed.hasPrefix("[")
         }
-        
+
         let jsonOutput = jsonLines.joined(separator: "\n")
-        
+
         if process.terminationStatus != 0 {
             return (error.isEmpty ? output : error, process.terminationStatus)
         }
-        
+
         return (jsonOutput.isEmpty ? output : jsonOutput, process.terminationStatus)
     } catch {
         return ("Error: \(error)", -1)
@@ -65,7 +65,7 @@ encoder.outputFormatting = .prettyPrinted
 
 for (index, line) in lines.enumerated() {
     let metadata = parseTrackMetadata(line)
-    
+
     // Create search query
     var searchQuery = ""
     if let artist = metadata.artist, let title = metadata.title {
@@ -80,19 +80,20 @@ for (index, line) in lines.enumerated() {
     if searchQuery.starts(with: "Maxi80") {
         continue
     }
-    
+
     // Escape quotes for shell command
     let escapedQuery = searchQuery.replacingOccurrences(of: "\"", with: "\\\"")
-    
+
     let command = "swift run Maxi80CLI --profile maxi80 --region eu-central-1 search --types songs \"\(escapedQuery)\""
-    
+
     let offset = 0
     print("[\(index + 1 + offset)/\(lines.count)] Searching: \(searchQuery)")
-    
+
     let result = runCommand(command)
-    
-    let outputFile = "\(outputDir)/\(String(format: "%03d", index + 1 + offset))_\(searchQuery.replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: ":", with: "_")).json"
-    
+
+    let outputFile =
+        "\(outputDir)/\(String(format: "%03d", index + 1 + offset))_\(searchQuery.replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: ":", with: "_")).json"
+
     if result.exitCode == 0 {
         try result.output.write(to: URL(fileURLWithPath: outputFile), atomically: true, encoding: .utf8)
         print("  ✓ Saved to \(outputFile)")
@@ -107,7 +108,7 @@ for (index, line) in lines.enumerated() {
         let jsonData = try encoder.encode(errorData)
         try jsonData.write(to: URL(fileURLWithPath: outputFile))
     }
-    
+
     // Small delay to avoid rate limiting
     Thread.sleep(forTimeInterval: 0.5)
 }

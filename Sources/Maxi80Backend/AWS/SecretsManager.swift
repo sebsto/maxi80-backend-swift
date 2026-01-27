@@ -57,11 +57,13 @@ public struct SecretsManager<S: Codable> {
         // Get the secret value
         logger.trace("Retrieving secret: \(secretName)")
         guard let response = try? await self.smClient.getSecretValue(input: request) else {
-            throw SecretsManagerError.invalidResponse(reason: """
-            Error calling SecretsManager client. Verify the following:
-            1/ the secret \(secretName) exists in \(region) 
-            2/ the calling code has secretsmanager:GetSecretValue IAM permission.
-            """)
+            throw SecretsManagerError.invalidResponse(
+                reason: """
+                    Error calling SecretsManager client. Verify the following:
+                    1/ the secret \(secretName) exists in \(region) 
+                    2/ the calling code has secretsmanager:GetSecretValue IAM permission.
+                    """
+            )
         }
         logger.trace("Secret retrieved")
 

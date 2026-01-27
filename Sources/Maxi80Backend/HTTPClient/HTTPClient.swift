@@ -26,7 +26,7 @@ public struct MusicAPIClient: HTTPClientProtocol {
 
     private let logger: Logger
     public init(logger: Logger) {
-        var logger = logger 
+        var logger = logger
         logger[metadataKey: "Component"] = "MusicAPIClient"
         self.logger = logger
     }

@@ -26,18 +26,18 @@ encoder.outputFormatting = .prettyPrinted
 
 for (index, line) in lines.enumerated() {
     let metadata = parseTrackMetadata(line)
-    
+
     let outputFile = "\(outputDir)/\(String(format: "%03d", index + 1))_parsed.json"
-    
+
     let result = ParsedMetadata(
         original: line,
         artist: metadata.artist,
         title: metadata.title
     )
-    
+
     let jsonData = try encoder.encode(result)
     try jsonData.write(to: URL(fileURLWithPath: outputFile))
-    
+
     print("[\(index + 1)/\(lines.count)] \(line) -> \(outputFile)")
 }
 
