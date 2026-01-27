@@ -15,7 +15,8 @@ struct CoreModelTests {
             shortDesc: "Test short description",
             longDesc: "Test long description",
             websiteUrl: "https://test.website.com",
-            donationUrl: "https://test.donation.com"
+            donationUrl: "https://test.donation.com",
+            defaultCoverUrl: "file://test-cover.png"
         )
         
         // When
@@ -33,6 +34,7 @@ struct CoreModelTests {
         #expect(decodedStation.longDesc == station.longDesc)
         #expect(decodedStation.websiteUrl == station.websiteUrl)
         #expect(decodedStation.donationUrl == station.donationUrl)
+        #expect(decodedStation.defaultCoverUrl == station.defaultCoverUrl)
     }
     
     @Test("Station default values")
