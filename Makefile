@@ -1,3 +1,9 @@
+# API Configuration
+API_GATEWAY_URL = https://sy50d5rbgh.execute-api.eu-central-1.amazonaws.com/Prod
+API_KEY_ID = ll9kmivjdb
+AWS_REGION = eu-central-1
+AWS_PROFILE = maxi80
+
 format:
 	swift format -i -r Package.swift Sources Tests
 
@@ -13,23 +19,23 @@ deploy:
 	sam deploy --config-env dev
 
 call-station:
-	$(eval API_KEY := $(shell aws apigateway get-api-key --api-key ll9kmivjdb --include-value --region eu-central-1 --profile maxi80 --query "value" --output text))
+	$(eval API_KEY := $(shell aws apigateway get-api-key --api-key $(API_KEY_ID) --include-value --region $(AWS_REGION) --profile $(AWS_PROFILE) --query "value" --output text))
 	@curl -X GET \
-  "https://6vcu20yo5c.execute-api.eu-central-1.amazonaws.com/Prod/station" \
+  "$(API_GATEWAY_URL)/station" \
   -H "x-api-key: $(API_KEY)" \
   -H "Accept: application/json"
 
 call-search:
-	$(eval API_KEY := $(shell aws apigateway get-api-key --api-key ll9kmivjdb --include-value --region eu-central-1 --profile maxi80 --query "value" --output text))
+	$(eval API_KEY := $(shell aws apigateway get-api-key --api-key $(API_KEY_ID) --include-value --region $(AWS_REGION) --profile $(AWS_PROFILE) --query "value" --output text))
 	$(eval SEARCH_TERM := $(shell echo 'Pink Floyd - The wall' | jq -sRr @uri))
 	@curl -X GET \
-  "https://6vcu20yo5c.execute-api.eu-central-1.amazonaws.com/Prod/search?term=$(SEARCH_TERM)" \
+  "$(API_GATEWAY_URL)/search?term=$(SEARCH_TERM)" \
   -H "x-api-key: $(API_KEY)" \
   -H "Accept: application/json"
 
 # Helper target to get just the API key
 get-api-key:
-	@aws apigateway get-api-key --api-key ll9kmivjdb --include-value --region eu-central-1 --profile maxi80 --query "value" --output text
+	@aws apigateway get-api-key --api-key $(API_KEY_ID) --include-value --region $(AWS_REGION) --profile $(AWS_PROFILE) --query "value" --output text
 
 BUILD_DIR := .aws-sam/build
 
