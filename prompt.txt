@@ -19,3 +19,7 @@ in the data directory write a swift executable script (with a shebang) to parse 
 
 now modify the lambda function. At the moment, it returns whatever has been returned by the AppleMusic API. . Create a model (in a new target to be shared with the client). The model will be Name Maxi80Searchresult. At the moment it will just contain an URL as a string. The Lambda function will use the new metadata parser if artists name is Maxi80 or nil, it doesn't search AppleMusic
  and returned an hardcoded URL available in Sttaion.swift
+
+ ===
+
+ read the content of the cognito folder and progressively add cognito unauthenticated support to this project. 1/ modify teh SAM template to create the cognito identity pool and IAM roles to grant access to the API. 2/ modify the API GAteway configuration to stop doing API Keys but API v4 sig. 3/ update the HTTP Client to send a sig v4 header 4/ add cognito and signer strucst to the AWS folder 5/ change the samples in trhe readme and make file to show how to test the API and 6/ whatever I forgot from this list and that you will think about.  If this is too much to manage, write a file with the plan for modifications 
