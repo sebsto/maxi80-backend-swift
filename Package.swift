@@ -15,6 +15,7 @@ let package = Package(
         .executable(name: "Maxi80CLI", targets: ["Maxi80CLI"]),
         .executable(name: "ParseMetadata", targets: ["ParseMetadata"]),
         .executable(name: "CollectAppleMusic", targets: ["CollectAppleMusic"]),
+        .executable(name: "IcecastMetadataCollector", targets: ["IcecastMetadataCollector"]),
     ],
     dependencies: [
         .package(url: "https://github.com/awslabs/swift-aws-lambda-runtime", from: "2.5.0"),
@@ -68,11 +69,27 @@ let package = Package(
             name: "CollectAppleMusic",
             dependencies: ["Maxi80Backend"]
         ),
+        .executableTarget(
+            name: "IcecastMetadataCollector",
+            dependencies: [
+                .product(name: "AWSLambdaRuntime", package: "swift-aws-lambda-runtime"),
+                .product(name: "AWSLambdaEvents", package: "swift-aws-lambda-events"),
+                .product(name: "AsyncHTTPClient", package: "async-http-client"),
+                .product(
+                    name: "Logging",
+                    package: "swift-log",
+                    condition: .when(platforms: [.linux, .macOS])
+                ),
+                .product(name: "AWSS3", package: "aws-sdk-swift"),
+                .target(name: "Maxi80Backend"),
+            ]
+        ),
         .testTarget(
             name: "Maxi80BackendTests",
             dependencies: [
                 "Maxi80Backend",
                 "Maxi80Lambda",
+                "IcecastMetadataCollector",
                 .product(name: "AWSLambdaEvents", package: "swift-aws-lambda-events"),
                 .product(
                     name: "Logging",

@@ -1,3 +1,6 @@
+# SAM Configuration
+SAM_STACK_NAME = Maxi80Backend-2025
+
 # API Configuration
 API_GATEWAY_URL = https://sy50d5rbgh.execute-api.eu-central-1.amazonaws.com/Prod
 API_KEY_ID = ll9kmivjdb
@@ -8,9 +11,7 @@ format:
 	swift format -i -r Package.swift Sources Tests
 
 build:
-	swift package --allow-network-connections docker archive --disable-docker-image-update --products Maxi80Lambda
-	cp .build/plugins/AWSLambdaPackager/outputs/AWSLambdaPackager/Maxi80Lambda/bootstrap .aws-sam/build/Maxi80Lambda/bootstrap  
-	cp template.yaml .aws-sam/build/template.yaml
+	swift package --allow-network-connections docker archive --disable-docker-image-update --products IcecastMetadataCollector --products Maxi80Lambda
 	
 test:
 	swift test
@@ -37,16 +38,8 @@ call-search:
 get-api-key:
 	@aws apigateway get-api-key --api-key $(API_KEY_ID) --include-value --region $(AWS_REGION) --profile $(AWS_PROFILE) --query "value" --output text
 
-BUILD_DIR := .aws-sam/build
+logs-maxi80:
+	sam logs --stack-name $(SAM_STACK_NAME) --name Maxi80Lambda --region $(AWS_REGION) --profile $(AWS_PROFILE) --tail
 
-.PHONY: build-%
-
-build-%:
-	@echo "Building Maxi80 Lambda..."
-	@echo "ARTIFACTS_DIR is: $(ARTIFACTS_DIR)"
-	swift package --allow-network-connections docker archive --disable-docker-image-update --products Maxi80Lambda
-	cp .build/plugins/AWSLambdaPackager/outputs/AWSLambdaPackager/Maxi80Lambda/bootstrap $(ARTIFACTS_DIR)/
-	@echo "Build for all Lambdas complete."
-
-prepare-sam-build:
-	find . -type l ! -exec test -e {} \; -delete
+logs-collector:
+	sam logs --stack-name $(SAM_STACK_NAME) --name IcecastMetadataCollector --region $(AWS_REGION) --profile $(AWS_PROFILE) --tail

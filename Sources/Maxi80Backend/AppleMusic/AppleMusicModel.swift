@@ -106,7 +106,7 @@ public struct Song: Codable {
         public let durationInMillis: Int
         public let releaseDate: String
         public let isrc: String
-        public let artwork: Artwork
+        public let artwork: Artwork?
         public let composerName: String?
         public let url: String
         public let playParams: PlayParams

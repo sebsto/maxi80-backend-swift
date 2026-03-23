@@ -33,27 +33,41 @@ Maxi80 Backend is a modern Swift serverless application that provides:
 Sources/
 ├── Maxi80Lambda/           # AWS Lambda handler
 │   ├── Lambda.swift        # Main Lambda function
-│   └── LambdaError.swift   # Error definitions
+│   ├── LambdaError.swift   # Error definitions
+│   ├── Router.swift        # Request routing
+│   └── Actions.swift       # Endpoint action handlers
 ├── Maxi80Backend/          # Core backend library
 │   ├── AppleMusic/         # Apple Music API integration
 │   │   ├── AppleMusic.swift
+│   │   ├── AppleMusicAuthProvider.swift
 │   │   ├── AppleMusicAuthentication.swift
 │   │   └── AppleMusicModel.swift
 │   ├── AWS/                # AWS service integrations
 │   │   ├── Region.swift
 │   │   ├── S3Cache.swift
 │   │   └── SecretsManager.swift
-│   ├── APIClient/          # HTTP client utilities
+│   ├── HTTPClient/         # HTTP client utilities
 │   │   ├── HTTPClient.swift
 │   │   └── HTTPLogger.swift
 │   ├── Endpoint.swift      # API endpoint definitions
+│   ├── Maxi80APIClient.swift
+│   ├── MetadataParser.swift
+│   ├── Secret.swift
 │   └── Station.swift       # Station data model
+├── IcecastMetadataCollector/ # Icecast stream metadata collector Lambda
+│   ├── Lambda.swift
+│   ├── IcecastReader.swift
+│   ├── ArtworkDownloader.swift
+│   ├── CollectedMetadata.swift
+│   ├── Errors.swift
+│   ├── HistoryManager.swift
+│   ├── S3Writer.swift
+│   └── SongSelector.swift
 └── Maxi80CLI/              # Command-line interface
     ├── CLIMain.swift       # CLI entry point
     ├── CLISearch.swift     # Search command
     ├── CLIManageSecret.swift # Secret management
-    ├── GlobalOptions.swift # Shared CLI options
-    └── Secret.swift        # Secret definitions
+    └── GlobalOptions.swift # Shared CLI options
 ```
 
 ## API Endpoints
@@ -135,16 +149,16 @@ swift run Maxi80CLI --profile maxi80 --region eu-central-1 store-secrets
 
 ## Building and Deployment
 
-### Build the Lambda Function
+### Build the Lambda Functions
 
 ```bash
 make build
 ```
 
 This command:
-- Compiles the Swift code using Docker
-- Packages the Lambda function
-- Prepares the SAM build artifacts
+- Compiles both Lambda functions (Maxi80Lambda and IcecastMetadataCollector) in a single Docker invocation
+- Strips debug symbols from the binaries to reduce size (~190 MB → ~85 MB)
+- Copies the bootstraps and template into `.aws-sam/build/`
 
 ### Deploy to AWS
 
@@ -153,11 +167,11 @@ make deploy
 ```
 
 This deploys the entire stack including:
-- Lambda function
-- API Gateway
+- Maxi80Lambda function (API backend)
+- IcecastMetadataCollector function (stream metadata collector)
+- API Gateway with API key authentication
 - IAM roles and policies
-- CloudWatch alarms
-- SNS topic for monitoring
+- CloudWatch alarms and SNS topic for monitoring
 
 ### Format Code
 
@@ -264,7 +278,7 @@ swift run Maxi80CLI search "test query"
 
 ### Code Style
 
-The project uses `swift-format` for consistent code formatting:
+The project uses `swift format` for consistent code formatting:
 
 ```bash
 make format

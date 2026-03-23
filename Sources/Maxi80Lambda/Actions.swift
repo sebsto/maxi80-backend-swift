@@ -102,8 +102,3 @@ public enum ActionError: Error, CustomStringConvertible {
         }
     }
 }
-
-/// Protocol for providing authorization headers
-public protocol AuthorizationProvider {
-    func authorizationHeader() async throws -> [String: String]
-}

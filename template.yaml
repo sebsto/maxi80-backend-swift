@@ -2,6 +2,11 @@ Transform: AWS::Serverless-2016-10-31
 AWSTemplateFormatVersion: 2010-09-09
 Description: Maxi80 iOS app backend service
 
+Parameters:
+   MetadataBucket:
+      Type: String
+      Description: Name of the S3 bucket used to store collected Icecast metadata and history
+
 Resources:
    Maxi80Lambda:
       Description: This function provides the backend to the Maxi80 iOS app
@@ -14,7 +19,7 @@ Resources:
                LOG_LEVEL: trace
          Architectures:
             - arm64
-         CodeUri: .
+         CodeUri: .build/plugins/AWSLambdaPackager/outputs/AWSLambdaPackager/Maxi80Lambda/Maxi80Lambda.zip
          Runtime: provided.al2
          Policies:
             - Statement:
@@ -31,6 +36,53 @@ Resources:
                   Method: ANY
                   Auth:
                      ApiKeyRequired: true
+
+   IcecastMetadataCollector:
+      Description: Collects Icecast stream metadata and stores in S3
+      Type: AWS::Serverless::Function
+      Properties:
+         Handler: bootstrap
+         Runtime: provided.al2
+         Architectures:
+            - arm64
+         CodeUri: .build/plugins/AWSLambdaPackager/outputs/AWSLambdaPackager/IcecastMetadataCollector/IcecastMetadataCollector.zip
+         MemorySize: 128
+         Timeout: 115
+         LoggingConfig:
+            LogFormat: JSON
+            ApplicationLogLevel: INFO
+            SystemLogLevel: WARN
+         Environment:
+            Variables:
+               STREAM_URL: https://audio1.maxi80.com
+               S3_BUCKET: !Ref MetadataBucket
+               KEY_PREFIX: v2
+               SECRETS: Maxi80-AppleMusicKey
+               LOG_LEVEL: info
+               MAX_HISTORY_SIZE: 100
+         Policies:
+            - Statement:
+                - Effect: Allow
+                  Action:
+                    - secretsmanager:GetSecretValue
+                    - secretsmanager:DescribeSecret
+                  Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:Maxi80-*"
+                - Effect: Allow
+                  Action:
+                    - s3:PutObject
+                    - s3:HeadObject
+                    - s3:GetObject
+                  Resource: !Sub "arn:aws:s3:::${MetadataBucket}/*"
+                - Effect: Allow
+                  Action:
+                    - s3:GetBucketLocation
+                  Resource: !Sub "arn:aws:s3:::${MetadataBucket}"
+         Events:
+            ScheduleEvent:
+               Type: Schedule
+               Properties:
+                  Schedule: rate(2 minutes)
+                  Enabled: true
       Metadata:
          BuildMethod: makefile
 

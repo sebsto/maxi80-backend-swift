@@ -1,0 +1,50 @@
+import Logging
+
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import Foundation
+#endif
+
+/// Protocol for providing authorization headers.
+public protocol AuthorizationProvider {
+    func authorizationHeader() async throws -> [String: String]
+}
+
+/// Provides Apple Music authorization headers with token caching.
+public struct AppleMusicAuthProvider: AuthorizationProvider {
+    private let tokenFactory: any JWTTokenFactoryProtocol
+    private let tokenCache = TokenCache()
+    private let logger: Logger
+
+    actor TokenCache {
+        var authTokenString: String? = nil
+        func token(_ token: String) async {
+            self.authTokenString = token
+        }
+        func token() async -> String? {
+            self.authTokenString
+        }
+    }
+
+    public init(tokenFactory: any JWTTokenFactoryProtocol, logger: Logger) {
+        self.tokenFactory = tokenFactory
+        self.logger = logger
+    }
+
+    public func authorizationHeader() async throws -> [String: String] {
+        let token: String
+
+        if let authToken = await self.tokenCache.token(),
+            await tokenFactory.validateJWTString(token: authToken)
+        {
+            self.logger.debug("Re-using a valid Apple Music Auth Token")
+            token = authToken
+        } else {
+            self.logger.debug("No Apple Music Auth Token or it is expired, generating a new one")
+            token = try await self.tokenFactory.generateJWTString()
+            await self.tokenCache.token(token)
+        }
+        return ["Authorization": "Bearer \(token)"]
+    }
+}

@@ -15,6 +15,7 @@ region = "eu-central-1"
 profile = "maxi80"
 capabilities = "CAPABILITY_IAM"
 image_repositories = []
+parameter_overrides = "MetadataBucket=artwork.maxi80.com"
 
 [dev.global.parameters]
 region = "eu-central-1"
