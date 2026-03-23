@@ -1,7 +1,6 @@
 import AsyncHTTPClient
 import Logging
 import NIOCore
-import NIOFoundationCompat
 import NIOHTTP1
 
 #if canImport(FoundationEssentials)
@@ -72,13 +71,13 @@ public struct MusicAPIClient: HTTPClientProtocol {
         }
 
         guard let responseSize = Int(response.headers.first(name: "content-length") ?? ""),
-            var bytes = try? await response.body.collect(upTo: max(responseSize, 1024 * 1024 * 10)),  //10 Mb maximum
-            let data = bytes.readData(length: bytes.readableBytes)
+            let bytes = try? await response.body.collect(upTo: max(responseSize, 1024 * 1024 * 10))
         else {
             logger.debug("No readable bytes in the response")
             throw HTTPClientError.zeroByteResource
         }
 
+        let data = Data(bytes.readableBytesView)
         logger.response(response, data: data, error: nil)
 
         return (data, response)
@@ -102,7 +101,7 @@ public struct MusicAPIClient: HTTPClientProtocol {
 
         // add body
         if let body {
-            request.body = HTTPClientRequest.Body.bytes(ByteBuffer(data: body))
+            request.body = HTTPClientRequest.Body.bytes(ByteBuffer(bytes: body))
         }
 
         // add headers

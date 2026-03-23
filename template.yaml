@@ -18,9 +18,10 @@ Resources:
                S3_BUCKET: !Ref MetadataBucket
                KEY_PREFIX: v2
                URL_EXPIRATION: 3600
-               LOG_LEVEL: trace
+               LOG_LEVEL: trace # for init
          Architectures:
             - arm64
+         MemorySize: 256
          CodeUri: .build/plugins/AWSLambdaPackager/outputs/AWSLambdaPackager/Maxi80Lambda/Maxi80Lambda.zip
          Runtime: provided.al2
          LoggingConfig:
@@ -52,7 +53,7 @@ Resources:
          Architectures:
             - arm64
          CodeUri: .build/plugins/AWSLambdaPackager/outputs/AWSLambdaPackager/IcecastMetadataCollector/IcecastMetadataCollector.zip
-         MemorySize: 128
+         MemorySize: 256
          Timeout: 115
          LoggingConfig:
             LogFormat: JSON
@@ -64,7 +65,7 @@ Resources:
                S3_BUCKET: !Ref MetadataBucket
                KEY_PREFIX: v2
                SECRETS: Maxi80-AppleMusicKey
-               LOG_LEVEL: info
+               LOG_LEVEL: info # for init
                MAX_HISTORY_SIZE: 100
          Policies:
             - Statement:

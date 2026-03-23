@@ -2,7 +2,6 @@ import AsyncHTTPClient
 import Logging
 import Maxi80Backend
 import NIOCore
-import NIOFoundationCompat
 
 #if canImport(FoundationEssentials)
 import FoundationEssentials
@@ -34,12 +33,11 @@ struct ArtworkDownloader {
             throw CollectorError.artworkDownloadFailed(reason: "HTTP \(response.status.code)")
         }
 
-        var body = try await response.body.collect(upTo: 10 * 1024 * 1024)  // 10MB max
-        guard let data = body.readData(length: body.readableBytes) else {
+        guard let bytes = try? await response.body.collect(upTo: 10 * 1024 * 1024)  // 10MB max
+        else {        
             throw CollectorError.artworkDownloadFailed(reason: "Empty response body")
         }
-
-        return data
+        return Data(bytes.readableBytesView)
     }
 
     /// Builds the artwork download URL by replacing {w} and {h} placeholders.
