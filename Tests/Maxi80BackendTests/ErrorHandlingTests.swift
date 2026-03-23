@@ -46,7 +46,7 @@ struct ErrorHandlingTests {
     func testMockHTTPClientErrorHandling() async throws {
         // Given
         let mockHTTPClient = MockHTTPClient()
-        mockHTTPClient.setError(HTTPClientError.badServerResponse(status: .internalServerError))
+        await mockHTTPClient.setError(HTTPClientError.badServerResponse(status: .internalServerError))
 
         // When & Then
         do {

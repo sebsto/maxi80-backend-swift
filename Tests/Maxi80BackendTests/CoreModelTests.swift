@@ -57,12 +57,12 @@ struct CoreModelTests {
     func testMaxi80EndpointFromPath() {
         // When
         let stationEndpoint = Maxi80Endpoint.from(path: "/station")
-        let searchEndpoint = Maxi80Endpoint.from(path: "/search")
+        let artworkEndpoint = Maxi80Endpoint.from(path: "/artwork")
         let invalidEndpoint = Maxi80Endpoint.from(path: "/invalid")
 
         // Then
         #expect(stationEndpoint == .station)
-        #expect(searchEndpoint == .search)
+        #expect(artworkEndpoint == .artwork)
         #expect(invalidEndpoint == nil)
     }
 
@@ -70,7 +70,7 @@ struct CoreModelTests {
     func testMaxi80EndpointRawValues() {
         // Then
         #expect(Maxi80Endpoint.station.rawValue == "/station")
-        #expect(Maxi80Endpoint.search.rawValue == "/search")
+        #expect(Maxi80Endpoint.artwork.rawValue == "/artwork")
     }
 
     @Test("Maxi80Endpoint all cases")
@@ -81,6 +81,6 @@ struct CoreModelTests {
         // Then
         #expect(allCases.count == 2)
         #expect(allCases.contains(.station))
-        #expect(allCases.contains(.search))
+        #expect(allCases.contains(.artwork))
     }
 }

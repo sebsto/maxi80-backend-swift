@@ -16,7 +16,7 @@ struct RouterTests {
     func testEndpointFromPath() {
         // Valid paths
         #expect(Maxi80Endpoint.from(path: "/station") == .station)
-        #expect(Maxi80Endpoint.from(path: "/search") == .search)
+        #expect(Maxi80Endpoint.from(path: "/artwork") == .artwork)
 
         // Invalid paths
         #expect(Maxi80Endpoint.from(path: "/invalid") == nil)
@@ -27,7 +27,7 @@ struct RouterTests {
     @Test("Endpoint raw values are correct")
     func testEndpointRawValues() {
         #expect(Maxi80Endpoint.station.rawValue == "/station")
-        #expect(Maxi80Endpoint.search.rawValue == "/search")
+        #expect(Maxi80Endpoint.artwork.rawValue == "/artwork")
     }
 
     // MARK: - Action Tests
@@ -41,19 +41,20 @@ struct RouterTests {
         #expect(action.method == .get)
     }
 
-    @Test("SearchAction has correct endpoint and method")
-    func testSearchActionProperties() {
+    @Test("ArtworkAction has correct endpoint and method")
+    func testArtworkActionProperties() {
         let logger = Logger(label: "test")
-        let mockHTTPClient = MockHTTPClient()
-        let mockAuthProvider = MockAuthProvider()
+        let mockS3Client = MockS3Client()
 
-        let action = SearchAction(
-            httpClient: mockHTTPClient,
-            authProvider: mockAuthProvider,
+        let action = ArtworkAction(
+            s3Client: mockS3Client,
+            bucket: "test-bucket",
+            keyPrefix: "v2",
+            urlExpiration: 3600,
             logger: logger
         )
 
-        #expect(action.endpoint == .search)
+        #expect(action.endpoint == .artwork)
         #expect(action.method == .get)
     }
 
@@ -71,58 +72,95 @@ struct RouterTests {
         #expect(station.streamUrl == "https://audio1.maxi80.com")
     }
 
-    @Test("SearchAction throws error when term parameter is missing")
-    func testSearchActionMissingParameter() async throws {
+    @Test("ArtworkAction throws error when artist parameter is missing")
+    func testArtworkActionMissingArtist() async throws {
         let logger = Logger(label: "test")
-        let mockHTTPClient = MockHTTPClient()
-        let mockAuthProvider = MockAuthProvider()
+        let mockS3Client = MockS3Client()
 
-        let action = SearchAction(
-            httpClient: mockHTTPClient,
-            authProvider: mockAuthProvider,
+        let action = ArtworkAction(
+            s3Client: mockS3Client,
+            bucket: "test-bucket",
+            keyPrefix: "v2",
+            urlExpiration: 3600,
             logger: logger
         )
 
-        let event = try TestHelpers.createAPIGatewayRequest(path: "/search")
+        let event = try TestHelpers.createAPIGatewayRequest(path: "/artwork")
 
         await #expect(throws: ActionError.self) {
             _ = try await action.handle(event: event)
         }
     }
 
-    @Test("SearchAction handles request with term parameter")
-    func testSearchActionWithTerm() async throws {
+    @Test("ArtworkAction throws error when title parameter is missing")
+    func testArtworkActionMissingTitle() async throws {
         let logger = Logger(label: "test")
-        let mockHTTPClient = MockHTTPClient()
-        let mockAuthProvider = MockAuthProvider()
+        let mockS3Client = MockS3Client()
 
-        mockAuthProvider.setAuthHeader(["Authorization": "Bearer test-token"])
-
-        let mockResponse = """
-            {
-                "results": {
-                    "songs": {
-                        "data": []
-                    }
-                }
-            }
-            """.data(using: .utf8)!
-
-        mockHTTPClient.setResponse(data: mockResponse)
-
-        let action = SearchAction(
-            httpClient: mockHTTPClient,
-            authProvider: mockAuthProvider,
+        let action = ArtworkAction(
+            s3Client: mockS3Client,
+            bucket: "test-bucket",
+            keyPrefix: "v2",
+            urlExpiration: 3600,
             logger: logger
         )
 
         let event = try TestHelpers.createAPIGatewayRequest(
-            path: "/search",
-            queryStringParameters: ["term": "Beatles"]
+            path: "/artwork",
+            queryStringParameters: ["artist": "Duran Duran"]
+        )
+
+        await #expect(throws: ActionError.self) {
+            _ = try await action.handle(event: event)
+        }
+    }
+
+    @Test("ArtworkAction returns presigned URL when artwork exists")
+    func testArtworkActionExists() async throws {
+        let logger = Logger(label: "test")
+        let mockS3Client = MockS3Client()
+        await mockS3Client.setExists(true)
+        await mockS3Client.setPresignedURL("https://s3.example.com/v2/Duran%20Duran/Rio/artwork.jpg")
+
+        let action = ArtworkAction(
+            s3Client: mockS3Client,
+            bucket: "test-bucket",
+            keyPrefix: "v2",
+            urlExpiration: 3600,
+            logger: logger
+        )
+
+        let event = try TestHelpers.createAPIGatewayRequest(
+            path: "/artwork",
+            queryStringParameters: ["artist": "Duran Duran", "title": "Rio"]
         )
 
         let data = try await action.handle(event: event)
-        #expect(data.count > 0)
+        let response = try JSONDecoder().decode(ArtworkResponse.self, from: data)
+        #expect(!response.url.isEmpty)
+    }
+
+    @Test("ArtworkAction returns empty data when artwork not found")
+    func testArtworkActionNotFound() async throws {
+        let logger = Logger(label: "test")
+        let mockS3Client = MockS3Client()
+        await mockS3Client.setExists(false)
+
+        let action = ArtworkAction(
+            s3Client: mockS3Client,
+            bucket: "test-bucket",
+            keyPrefix: "v2",
+            urlExpiration: 3600,
+            logger: logger
+        )
+
+        let event = try TestHelpers.createAPIGatewayRequest(
+            path: "/artwork",
+            queryStringParameters: ["artist": "Unknown", "title": "Song"]
+        )
+
+        let data = try await action.handle(event: event)
+        #expect(data.isEmpty)
     }
 
     // MARK: - Router Tests
@@ -145,20 +183,21 @@ struct RouterTests {
         #expect(action.method == .get)
     }
 
-    @Test("Router routes GET /search to SearchAction")
-    func testRouterSearchEndpoint() throws {
+    @Test("Router routes GET /artwork to ArtworkAction")
+    func testRouterArtworkEndpoint() throws {
         let logger = Logger(label: "test")
-        let mockHTTPClient = MockHTTPClient()
-        let mockAuthProvider = MockAuthProvider()
+        let mockS3Client = MockS3Client()
 
-        let searchAction = SearchAction(
-            httpClient: mockHTTPClient,
-            authProvider: mockAuthProvider,
+        let artworkAction = ArtworkAction(
+            s3Client: mockS3Client,
+            bucket: "test-bucket",
+            keyPrefix: "v2",
+            urlExpiration: 3600,
             logger: logger
         )
-        let router = Router(actions: [searchAction], logger: logger)
+        let router = Router(actions: [artworkAction], logger: logger)
 
-        let event = try TestHelpers.createAPIGatewayRequest(path: "/search", httpMethod: "GET")
+        let event = try TestHelpers.createAPIGatewayRequest(path: "/artwork", httpMethod: "GET")
         let result = router.route(event)
 
         guard case .success(let action) = result else {
@@ -166,7 +205,7 @@ struct RouterTests {
             return
         }
 
-        #expect(action.endpoint == .search)
+        #expect(action.endpoint == .artwork)
         #expect(action.method == .get)
     }
 
@@ -311,18 +350,5 @@ struct MockPostStationAction: Action {
     func handle(event: APIGatewayRequest) async throws -> Data {
         logger.debug("Handling POST station request")
         return Data()
-    }
-}
-
-/// Mock authorization provider for testing
-class MockAuthProvider: AuthorizationProvider {
-    private var authHeader: [String: String] = [:]
-
-    func setAuthHeader(_ header: [String: String]) {
-        self.authHeader = header
-    }
-
-    func authorizationHeader() async throws -> [String: String] {
-        authHeader
     }
 }

@@ -37,6 +37,7 @@ let package = Package(
                     package: "swift-log",
                     condition: .when(platforms: [.linux, .macOS])
                 ),
+                .product(name: "AWSS3", package: "aws-sdk-swift"),
                 .target(name: "Maxi80Backend"),
             ]
         ),

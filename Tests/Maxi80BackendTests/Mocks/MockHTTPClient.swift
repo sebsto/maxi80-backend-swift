@@ -12,9 +12,9 @@ import Foundation
 #endif
 
 /// Mock HTTP client for testing
-public final class MockHTTPClient: HTTPClientProtocol, @unchecked Sendable {
+public actor MockHTTPClient: HTTPClientProtocol {
 
-    public struct CallRecord {
+    public struct CallRecord: Sendable {
         public let url: URL
         public let method: NIOHTTP1.HTTPMethod
         public let body: Data?
@@ -72,7 +72,8 @@ public final class MockHTTPClient: HTTPClientProtocol, @unchecked Sendable {
         return (data, response)
     }
 
-    // Test helper methods
+    // MARK: - Test helpers
+
     public func setResponse(data: Data, status: HTTPResponseStatus = .ok) {
         responseData.append(data)
         responseStatuses.append(status)

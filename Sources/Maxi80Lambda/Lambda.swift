@@ -1,5 +1,6 @@
 import AWSLambdaEvents
 import AWSLambdaRuntime
+@preconcurrency import AWSS3
 import HTTPTypes
 import Logging
 import Maxi80Backend
@@ -16,12 +17,8 @@ struct Maxi80Lambda: LambdaHandler {
     private let router: Router
     private let logger: Logger
 
-    // isolate the shared mutable state as an actor
-    // in theory, we don't need this on Lambda as exactly one handler is running at a time
-
     init(
-        musicAPIClient: HTTPClientProtocol? = nil,
-        tokenFactory: JWTTokenFactoryProtocol? = nil,
+        s3Client: S3ClientProtocol? = nil,
         logger: Logger? = nil
     ) async throws {
 
@@ -32,49 +29,36 @@ struct Maxi80Lambda: LambdaHandler {
         self.logger = logger
 
         // read the region from the environment variable
-        let region = Lambda.env("AWS_REGION").flatMap { Region(awsRegionName: $0) } ?? .eucentral1
+        let region = Region(awsRegionName: Lambda.env("AWS_REGION") ?? "eu-central-1") ?? .eucentral1
         self.logger.trace("Region: \(region)")
 
-        let httpClient = musicAPIClient ?? MusicAPIClient(logger: self.logger)
+        // S3 configuration
+        let bucket = Lambda.env("S3_BUCKET") ?? "artwork.maxi80.com"
+        let keyPrefix = Lambda.env("KEY_PREFIX") ?? "v2"
+        let urlExpiration = TimeInterval(Lambda.env("URL_EXPIRATION").flatMap { Int($0) } ?? 3600)
 
-        let resolvedTokenFactory: JWTTokenFactoryProtocol
-        if let providedFactory = tokenFactory {
-            resolvedTokenFactory = providedFactory
+        let resolvedS3Client: S3ClientProtocol
+        if let provided = s3Client {
+            resolvedS3Client = provided
         } else {
-            do {
-                let secretName = Lambda.env("SECRETS") ?? "Maxi80-AppleMusicKey"
-                let secretsManager = try SecretsManager<AppleMusicSecret>(region: region, logger: logger)
-                let secret = try await secretsManager.getSecret(secretName: secretName)
-
-                resolvedTokenFactory = JWTTokenFactory(
-                    secretKey: secret.privateKey,
-                    keyId: secret.keyId,
-                    issuerId: secret.teamId
-                )
-            } catch {
-                logger.error("Can't read AppleMusic API key secret. Root cause: \(error)")
-                throw LambdaError.cantAccessMusicAPISecret(rootCause: error)
-            }
+            let s3 = try S3Client(region: region.rawValue)
+            resolvedS3Client = AWSS3ClientAdapter(s3Client: s3, region: region)
         }
-
-        // Initialize auth provider
-        let authProvider = AppleMusicAuthProvider(
-            tokenFactory: resolvedTokenFactory,
-            logger: logger
-        )
 
         // Initialize actions array
         let actions: [any Action] = [
-            StationAction(logger: logger),
-            SearchAction(
-                httpClient: httpClient,
-                authProvider: authProvider,
-                logger: logger
+            StationAction(logger: self.logger),
+            ArtworkAction(
+                s3Client: resolvedS3Client,
+                bucket: bucket,
+                keyPrefix: keyPrefix,
+                urlExpiration: urlExpiration,
+                logger: self.logger
             ),
         ]
 
         // Initialize router with actions
-        self.router = Router(actions: actions, logger: logger)
+        self.router = Router(actions: actions, logger: self.logger)
     }
 
     // the return value must be either APIGatewayResponse or any Encodable struct
@@ -91,11 +75,15 @@ struct Maxi80Lambda: LambdaHandler {
             // Execute the action
             let responseData = try await action.handle(event: event)
 
-            return APIGatewayResponse(
-                statusCode: .ok,
-                headers: header,
-                body: String(data: responseData, encoding: .utf8)
-            )
+            if responseData.isEmpty {
+                return APIGatewayResponse(statusCode: .noContent)
+            } else {
+                return APIGatewayResponse(
+                    statusCode: .ok,
+                    headers: header,
+                    body: String(data: responseData, encoding: .utf8)
+                )
+            }
 
         } catch let error as RouterError {
             return APIGatewayResponse(

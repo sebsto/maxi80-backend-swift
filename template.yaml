@@ -15,7 +15,9 @@ Resources:
          Handler: bootstrap
          Environment:
             Variables:
-               SECRETS: Maxi80-AppleMusicKey
+               S3_BUCKET: !Ref MetadataBucket
+               KEY_PREFIX: v2
+               URL_EXPIRATION: 3600
                LOG_LEVEL: trace
          Architectures:
             - arm64
@@ -25,9 +27,9 @@ Resources:
             - Statement:
                 - Effect: Allow
                   Action:
-                    - secretsmanager:GetSecretValue
-                    - secretsmanager:DescribeSecret
-                  Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:Maxi80-*"
+                    - s3:GetObject
+                    - s3:HeadObject
+                  Resource: !Sub "arn:aws:s3:::${MetadataBucket}/*"
          Events:
             ApiEvent:
                Type: Api
