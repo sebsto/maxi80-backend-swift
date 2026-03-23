@@ -138,6 +138,14 @@ struct IcecastMetadataCollector: LambdaHandler {
         }
         logger.info("Parsed: artist=\(artist), title=\(title)")
 
+        // Step 2b: If artist is "maxi80" or "maxi 80" (case-insensitive), skip Apple Music search
+        let normalizedArtist = artist.lowercased().trimmingCharacters(in: .whitespaces)
+        if normalizedArtist == "maxi80" || normalizedArtist == "maxi 80" {
+            logger.info("Artist is Maxi 80, skipping Apple Music search")
+            await recordHistory(artist: artist, title: title, file: "nocover.jpg")
+            return
+        }
+
         // Step 3: Check S3 cache — skip if already collected
         if try await s3Writer.exists(artist: artist, title: title) {
             logger.info("Cache hit for \(artist)/\(title), skipping")
@@ -198,7 +206,7 @@ struct IcecastMetadataCollector: LambdaHandler {
         }
 
         // Record history entry for cache miss
-        await recordHistory(artist: artist, title: title, file: "artwork.jpg")
+        await recordHistory(artist: artist, title: title, file: artworkData != nil ? "artwork.jpg" : "nocover.jpg")
 
         logger.info("Successfully collected metadata for \(artist) - \(title)")
     }
