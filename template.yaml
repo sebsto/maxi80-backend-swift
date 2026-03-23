@@ -2,6 +2,13 @@ Transform: AWS::Serverless-2016-10-31
 AWSTemplateFormatVersion: 2010-09-09
 Description: Maxi80 iOS app backend service
 
+Globals:
+   Function:
+      LoggingConfig:
+         LogFormat: JSON
+         ApplicationLogLevel: INFO
+         SystemLogLevel: INFO
+
 Parameters:
    MetadataBucket:
       Type: String
@@ -24,10 +31,6 @@ Resources:
          MemorySize: 256
          CodeUri: .build/plugins/AWSLambdaPackager/outputs/AWSLambdaPackager/Maxi80Lambda/Maxi80Lambda.zip
          Runtime: provided.al2
-         LoggingConfig:
-            LogFormat: JSON
-            ApplicationLogLevel: DEBUG
-            SystemLogLevel: DEBUG
          Policies:
             - Statement:
                 - Effect: Allow
@@ -55,10 +58,6 @@ Resources:
          CodeUri: .build/plugins/AWSLambdaPackager/outputs/AWSLambdaPackager/IcecastMetadataCollector/IcecastMetadataCollector.zip
          MemorySize: 256
          Timeout: 115
-         LoggingConfig:
-            LogFormat: JSON
-            ApplicationLogLevel: DEBUG
-            SystemLogLevel: DEBUG
          Environment:
             Variables:
                STREAM_URL: https://audio1.maxi80.com
