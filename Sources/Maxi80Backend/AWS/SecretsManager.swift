@@ -28,7 +28,7 @@ public struct SecretsManager<S: Codable> {
         // create a SecretsManager configuration
         self.region = region
         guard
-            let config = try? SecretsManagerClient.SecretsManagerClientConfiguration(
+            var config = try? SecretsManagerClient.SecretsManagerClientConfig(
                 region: region.rawValue
             )
         else {

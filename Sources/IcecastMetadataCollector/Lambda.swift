@@ -45,7 +45,7 @@ struct IcecastMetadataCollector: LambdaHandler {
         // Resolve the actual bucket region via GetBucketLocation
         let bucketRegion: Region
         do {
-            let tempConfig = try await S3Client.S3ClientConfiguration(region: configuredRegion.rawValue)
+            let tempConfig = try await S3Client.S3ClientConfig(region: configuredRegion.rawValue)
             let tempS3 = S3Client(config: tempConfig)
             let locationOutput = try await tempS3.getBucketLocation(input: GetBucketLocationInput(bucket: bucket))
             if let locationConstraint = locationOutput.locationConstraint?.rawValue, !locationConstraint.isEmpty {
@@ -85,7 +85,7 @@ struct IcecastMetadataCollector: LambdaHandler {
         self.httpClient = MusicAPIClient(logger: logger)
 
         // Initialize S3Writer (uses the resolved bucket region)
-        let s3Config = try await S3Client.S3ClientConfiguration(region: bucketRegion.rawValue)
+        let s3Config = try await S3Client.S3ClientConfig(region: bucketRegion.rawValue)
         let s3Client = S3Client(config: s3Config)
         self.s3Writer = S3Writer(s3Client: s3Client, bucket: bucket, keyPrefix: keyPrefix, logger: logger)
 

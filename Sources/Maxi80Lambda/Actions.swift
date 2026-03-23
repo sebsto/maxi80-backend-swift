@@ -151,7 +151,7 @@ public struct AWSS3ClientAdapter: S3ClientProtocol, @unchecked Sendable {
 
     public func presignedGetURL(bucket: String, key: String, expiration: TimeInterval) async throws -> String {
         let input = GetObjectInput(bucket: bucket, key: key)
-        let config = try await S3Client.S3ClientConfiguration(region: region.rawValue)
+        let config = try await S3Client.S3ClientConfig(region: region.rawValue)
         guard let url = try await input.presignURL(config: config, expiration: expiration) else {
             throw ActionError.invalidParameter(name: "key", reason: "Failed to generate pre-signed URL")
         }
