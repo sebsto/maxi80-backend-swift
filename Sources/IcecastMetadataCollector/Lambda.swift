@@ -138,7 +138,19 @@ struct IcecastMetadataCollector: LambdaHandler {
         }
         logger.info("Parsed: artist=\(artist), title=\(title)")
 
-        // Step 2b: If artist is "maxi80" or "maxi 80" (case-insensitive), skip Apple Music search
+        // Step 2b: Check if this is the same track as the latest history entry — skip everything if so
+        do {
+            let history = try await historyManager.readHistory()
+            if let latest = history.entries.max(by: { $0.timestamp < $1.timestamp }),
+               latest.artist == artist, latest.title == title {
+                logger.info("Same track as latest history entry (\(artist) - \(title)), skipping")
+                return
+            }
+        } catch {
+            logger.warning("Failed to read history for dedup check, continuing: \(error)")
+        }
+
+        // Step 2c: If artist is "maxi80" or "maxi 80" (case-insensitive), skip Apple Music search
         let normalizedArtist = artist.lowercased().trimmingCharacters(in: .whitespaces)
         if normalizedArtist == "maxi80" || normalizedArtist == "maxi 80" {
             logger.info("Artist is Maxi 80, skipping Apple Music search")
