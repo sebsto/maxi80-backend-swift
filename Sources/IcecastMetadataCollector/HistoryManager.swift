@@ -66,9 +66,8 @@ struct HistoryManager {
     }
 
     /// Records a new history entry. Non-throwing — errors are logged internally.
+    /// Skips writing if the most recent entry (by timestamp) already matches on artist, title, and artwork.
     func recordEntry(artist: String, title: String, artworkKey: String, timestamp: String) async {
-        let entry = HistoryEntry(artist: artist, title: title, artwork: artworkKey, timestamp: timestamp)
-
         var history: HistoryFile
         do {
             history = try await readHistory()
@@ -77,6 +76,14 @@ struct HistoryManager {
             history = HistoryFile(entries: [])
         }
 
+        // Deduplicate: if the latest entry matches, skip
+        if let latest = history.entries.max(by: { $0.timestamp < $1.timestamp }),
+           latest.artist == artist, latest.title == title, latest.artwork == artworkKey {
+            logger.info("Duplicate of latest history entry, skipping")
+            return
+        }
+
+        let entry = HistoryEntry(artist: artist, title: title, artwork: artworkKey, timestamp: timestamp)
         let updated = appendAndTrim(entry: entry, to: history, maxSize: maxHistorySize)
 
         do {
