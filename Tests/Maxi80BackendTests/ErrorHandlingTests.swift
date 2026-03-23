@@ -73,7 +73,7 @@ struct ErrorHandlingTests {
     func testMockJWTTokenFactoryErrorHandling() async throws {
         // Given
         let mockTokenFactory = MockJWTTokenFactory()
-        mockTokenFactory.setGenerateTokenError(MockError.invalidToken)
+        await mockTokenFactory.setGenerateTokenError(MockError.invalidToken)
 
         // When & Then
         do {

@@ -42,42 +42,76 @@ struct IcecastMetadataCollector: LambdaHandler {
         let configuredRegion = Lambda.env("AWS_REGION").flatMap { Region(awsRegionName: $0) } ?? .eucentral1
         logger.trace("Configured region: \(configuredRegion)")
 
-        // Resolve the actual bucket region via GetBucketLocation
-        let bucketRegion: Region
-        do {
-            let tempConfig = try await S3Client.S3ClientConfig(region: configuredRegion.rawValue)
-            let tempS3 = S3Client(config: tempConfig)
-            let locationOutput = try await tempS3.getBucketLocation(input: GetBucketLocationInput(bucket: bucket))
-            if let locationConstraint = locationOutput.locationConstraint?.rawValue, !locationConstraint.isEmpty {
-                bucketRegion = Region(rawValue: locationConstraint)
-            } else {
-                // No constraint means us-east-1
-                bucketRegion = .useast1
-            }
-            logger.info("Bucket \(bucket) is in region \(bucketRegion)")
-        } catch {
-            logger.warning("Failed to resolve bucket region, falling back to \(configuredRegion): \(error)")
-            bucketRegion = configuredRegion
+        // Resolve bucket region and retrieve Apple Music secret in parallel.
+        // These two async operations are independent — both only need env-derived values.
+        enum InitResult: Sendable {
+            case bucketRegion(Region)
+            case tokenFactory(any JWTTokenFactoryProtocol)
         }
 
-        // Retrieve Apple Music secret from SecretsManager (uses the configured/deployment region)
-        let resolvedTokenFactory: JWTTokenFactoryProtocol
-        do {
-            let secretsManager = try SecretsManager<AppleMusicSecret>(region: configuredRegion, logger: logger)
-            let secret = try await secretsManager.getSecret(secretName: secretName)
-            resolvedTokenFactory = JWTTokenFactory(
-                secretKey: secret.privateKey,
-                keyId: secret.keyId,
-                issuerId: secret.teamId
-            )
-        } catch {
-            logger.error("Can't read AppleMusic API key secret. Root cause: \(error)")
-            throw CollectorError.secretRetrievalFailed(reason: "\(error)")
+        // Snapshot logger as a let so task closures can safely capture it
+        let initLogger = logger
+
+        var resolvedBucketRegion: Region = configuredRegion
+        var resolvedTokenFactory: (any JWTTokenFactoryProtocol)?
+
+        try await withThrowingTaskGroup(of: InitResult.self) { group in
+
+            // Task 1: Resolve the actual bucket region via GetBucketLocation
+            group.addTask {
+                do {
+                    let tempConfig = try await S3Client.S3ClientConfig(region: configuredRegion.rawValue)
+                    let tempS3 = S3Client(config: tempConfig)
+                    let locationOutput = try await tempS3.getBucketLocation(
+                        input: GetBucketLocationInput(bucket: bucket)
+                    )
+                    if let locationConstraint = locationOutput.locationConstraint?.rawValue,
+                       !locationConstraint.isEmpty {
+                        return .bucketRegion(Region(rawValue: locationConstraint))
+                    } else {
+                        // No constraint means us-east-1
+                        return .bucketRegion(.useast1)
+                    }
+                } catch {
+                    // Non-fatal: fall back to configured region
+                    return .bucketRegion(configuredRegion)
+                }
+            }
+
+            // Task 2: Retrieve Apple Music secret from SecretsManager
+            group.addTask {
+                let secretsManager = try SecretsManager<AppleMusicSecret>(
+                    region: configuredRegion, logger: initLogger
+                )
+                let secret = try await secretsManager.getSecret(secretName: secretName)
+                let factory = JWTTokenFactory(
+                    secretKey: secret.privateKey,
+                    keyId: secret.keyId,
+                    issuerId: secret.teamId
+                )
+                return .tokenFactory(factory)
+            }
+
+            // Collect results as they arrive
+            for try await result in group {
+                switch result {
+                case .bucketRegion(let region):
+                    resolvedBucketRegion = region
+                    logger.info("Bucket \(bucket) is in region \(region)")
+                case .tokenFactory(let factory):
+                    resolvedTokenFactory = factory
+                    logger.info("Apple Music secret retrieved successfully")
+                }
+            }
+        }
+
+        guard let tokenFactory = resolvedTokenFactory else {
+            throw CollectorError.secretRetrievalFailed(reason: "Token factory was not resolved")
         }
 
         // Initialize auth provider with token cache
         self.authProvider = AppleMusicAuthProvider(
-            tokenFactory: resolvedTokenFactory,
+            tokenFactory: tokenFactory,
             logger: logger
         )
 
@@ -85,7 +119,7 @@ struct IcecastMetadataCollector: LambdaHandler {
         self.httpClient = MusicAPIClient(logger: logger)
 
         // Initialize S3Writer (uses the resolved bucket region)
-        let s3Config = try await S3Client.S3ClientConfig(region: bucketRegion.rawValue)
+        let s3Config = try await S3Client.S3ClientConfig(region: resolvedBucketRegion.rawValue)
         let s3Client = S3Client(config: s3Config)
         self.s3Writer = S3Writer(s3Client: s3Client, bucket: bucket, keyPrefix: keyPrefix, logger: logger)
 

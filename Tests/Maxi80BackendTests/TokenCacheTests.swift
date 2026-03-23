@@ -15,7 +15,7 @@ struct TokenCacheTests {
     func testTokenFactoryGeneratesToken() async throws {
         // Given
         let mockTokenFactory = MockJWTTokenFactory()
-        mockTokenFactory.setGenerateTokenResponse("test-jwt-token")
+        await mockTokenFactory.setGenerateTokenResponse("test-jwt-token")
 
         // When
         let token = try await mockTokenFactory.generateJWTString()
@@ -23,7 +23,7 @@ struct TokenCacheTests {
         // Then
         #expect(token == "test-jwt-token")
 
-        let calls = mockTokenFactory.getCallRecords()
+        let calls = await mockTokenFactory.getCallRecords()
         #expect(calls.count == 1)
         #expect(calls[0].action == .generateJWTString)
     }
@@ -32,7 +32,7 @@ struct TokenCacheTests {
     func testTokenFactoryValidatesToken() async throws {
         // Given
         let mockTokenFactory = MockJWTTokenFactory()
-        mockTokenFactory.setValidateTokenResponse(true)
+        await mockTokenFactory.setValidateTokenResponse(true)
 
         // When
         let isValid = await mockTokenFactory.validateJWTString(token: "test-token")
@@ -40,7 +40,7 @@ struct TokenCacheTests {
         // Then
         #expect(isValid == true)
 
-        let calls = mockTokenFactory.getCallRecords()
+        let calls = await mockTokenFactory.getCallRecords()
         #expect(calls.count == 1)
         #expect(calls[0].action == .validateJWTString("test-token"))
     }
@@ -49,7 +49,7 @@ struct TokenCacheTests {
     func testTokenFactoryValidatesInvalidToken() async throws {
         // Given
         let mockTokenFactory = MockJWTTokenFactory()
-        mockTokenFactory.setValidateTokenResponse(false)
+        await mockTokenFactory.setValidateTokenResponse(false)
 
         // When
         let isValid = await mockTokenFactory.validateJWTString(token: "invalid-token")
@@ -57,7 +57,7 @@ struct TokenCacheTests {
         // Then
         #expect(isValid == false)
 
-        let calls = mockTokenFactory.getCallRecords()
+        let calls = await mockTokenFactory.getCallRecords()
         #expect(calls.count == 1)
         #expect(calls[0].action == .validateJWTString("invalid-token"))
     }
@@ -66,9 +66,9 @@ struct TokenCacheTests {
     func testTokenFactoryCallRecords() async throws {
         // Given
         let mockTokenFactory = MockJWTTokenFactory()
-        mockTokenFactory.setGenerateTokenResponse("token1")
-        mockTokenFactory.setValidateTokenResponse(true)
-        mockTokenFactory.setGenerateTokenResponse("token2")  // Add second response
+        await mockTokenFactory.setGenerateTokenResponse("token1")
+        await mockTokenFactory.setValidateTokenResponse(true)
+        await mockTokenFactory.setGenerateTokenResponse("token2")  // Add second response
 
         // When
         _ = try await mockTokenFactory.generateJWTString()
@@ -76,7 +76,7 @@ struct TokenCacheTests {
         _ = try await mockTokenFactory.generateJWTString()
 
         // Then
-        let calls = mockTokenFactory.getCallRecords()
+        let calls = await mockTokenFactory.getCallRecords()
         #expect(calls.count == 3)
         #expect(calls[0].action == .generateJWTString)
         #expect(calls[1].action == .validateJWTString("token1"))

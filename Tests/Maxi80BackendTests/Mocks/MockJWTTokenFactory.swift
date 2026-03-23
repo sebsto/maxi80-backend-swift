@@ -1,14 +1,14 @@
 import Foundation
 import Maxi80Backend
 
-/// Mock JWT token factory for testing
-public final class MockJWTTokenFactory: JWTTokenFactoryProtocol {
+/// Mock JWT token factory for testing, using actor isolation for thread safety.
+public actor MockJWTTokenFactory: JWTTokenFactoryProtocol {
 
-    public struct CallRecord {
+    public struct CallRecord: Sendable {
         public let action: Action
         public let token: String?
 
-        public enum Action: Equatable {
+        public enum Action: Equatable, Sendable {
             case generateJWTString
             case validateJWTString(String?)
         }

@@ -7,7 +7,7 @@ import Foundation
 #endif
 
 /// Protocol for JWT token operations
-public protocol JWTTokenFactoryProtocol {
+public protocol JWTTokenFactoryProtocol: Sendable {
     func generateJWTString() async throws -> String
     func validateJWTString(token: String?) async -> Bool
 }

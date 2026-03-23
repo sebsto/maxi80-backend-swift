@@ -27,11 +27,11 @@ struct AppleMusicAuthProviderTests {
         let mockFactory = MockJWTTokenFactory()
 
         // First call generates a token
-        mockFactory.setGenerateTokenResponse("cached-token-\(testCase.callCount)")
+        await mockFactory.setGenerateTokenResponse("cached-token-\(testCase.callCount)")
 
         // All subsequent validate calls return true (token is still valid)
         for _ in 0..<testCase.callCount {
-            mockFactory.setValidateTokenResponse(true)
+            await mockFactory.setValidateTokenResponse(true)
         }
 
         let provider = AppleMusicAuthProvider(
@@ -47,7 +47,7 @@ struct AppleMusicAuthProviderTests {
         }
 
         // Verify: generateJWTString should have been called exactly once
-        let calls = mockFactory.getCallRecords()
+        let calls = await mockFactory.getCallRecords()
         let generateCalls = calls.filter { $0.action == .generateJWTString }
         #expect(generateCalls.count == 1, "generateJWTString should be called exactly once, was called \(generateCalls.count) times")
 
