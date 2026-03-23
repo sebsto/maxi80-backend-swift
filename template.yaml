@@ -23,6 +23,10 @@ Resources:
             - arm64
          CodeUri: .build/plugins/AWSLambdaPackager/outputs/AWSLambdaPackager/Maxi80Lambda/Maxi80Lambda.zip
          Runtime: provided.al2
+         LoggingConfig:
+            LogFormat: JSON
+            ApplicationLogLevel: DEBUG
+            SystemLogLevel: DEBUG
          Policies:
             - Statement:
                 - Effect: Allow
@@ -52,8 +56,8 @@ Resources:
          Timeout: 115
          LoggingConfig:
             LogFormat: JSON
-            ApplicationLogLevel: INFO
-            SystemLogLevel: WARN
+            ApplicationLogLevel: DEBUG
+            SystemLogLevel: DEBUG
          Environment:
             Variables:
                STREAM_URL: https://audio1.maxi80.com

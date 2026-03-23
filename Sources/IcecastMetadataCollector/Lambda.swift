@@ -13,7 +13,6 @@ import Foundation
 @main
 struct IcecastMetadataCollector: LambdaHandler {
 
-    private let logger: Logger
     private let streamURL: String
     private let authProvider: AppleMusicAuthProvider
     private let httpClient: MusicAPIClient
@@ -23,10 +22,8 @@ struct IcecastMetadataCollector: LambdaHandler {
     private let historyManager: HistoryManager
 
     init() async throws {
-        // Configure logger from LOG_LEVEL env var
         var logger = Logger(label: "IcecastMetadataCollector")
         logger.logLevel = Lambda.env("LOG_LEVEL").flatMap { Logger.Level(rawValue: $0) } ?? .info
-        self.logger = logger
 
         // Read required environment variables
         guard let streamURL = Lambda.env("STREAM_URL") else {
@@ -118,49 +115,49 @@ struct IcecastMetadataCollector: LambdaHandler {
     }
 
     func handle(_ event: EventBridgeEvent<CloudwatchDetails.Scheduled>, context: LambdaContext) async throws {
-        logger.info("Invocation started")
+        context.logger.info("Invocation started")
 
         // Step 1: Read Icecast stream metadata
         let rawMetadata: String
         do {
             rawMetadata = try await icecastReader.readMetadata(from: streamURL)
         } catch {
-            logger.error("Failed to read Icecast stream: \(error)")
+            context.logger.error("Failed to read Icecast stream: \(error)")
             throw error
         }
-        logger.info("Raw metadata: \(rawMetadata)")
+        context.logger.info("Raw metadata: \(rawMetadata)")
 
         // Step 2: Parse metadata into artist/title
         let trackMetadata = parseTrackMetadata(rawMetadata)
         guard let artist = trackMetadata.artist, let title = trackMetadata.title else {
-            logger.warning("Empty metadata — both artist and title are nil, skipping")
+            context.logger.warning("Empty metadata — both artist and title are nil, skipping")
             return
         }
-        logger.info("Parsed: artist=\(artist), title=\(title)")
+        context.logger.info("Parsed: artist=\(artist), title=\(title)")
 
         // Step 2b: Check if this is the same track as the latest history entry — skip everything if so
         do {
             let history = try await historyManager.readHistory()
             if let latest = history.entries.max(by: { $0.timestamp < $1.timestamp }),
                latest.artist == artist, latest.title == title {
-                logger.info("Same track as latest history entry (\(artist) - \(title)), skipping")
+                context.logger.info("Same track as latest history entry (\(artist) - \(title)), skipping")
                 return
             }
         } catch {
-            logger.warning("Failed to read history for dedup check, continuing: \(error)")
+            context.logger.warning("Failed to read history for dedup check, continuing: \(error)")
         }
 
         // Step 2c: If artist is "maxi80" or "maxi 80" (case-insensitive), skip Apple Music search
         let normalizedArtist = artist.lowercased().trimmingCharacters(in: .whitespaces)
         if normalizedArtist == "maxi80" || normalizedArtist == "maxi 80" {
-            logger.info("Artist is Maxi 80, skipping Apple Music search")
+            context.logger.info("Artist is Maxi 80, skipping Apple Music search")
             await recordHistory(artist: artist, title: title, file: "nocover.jpg")
             return
         }
 
         // Step 3: Check S3 cache — skip if already collected
         if try await s3Writer.exists(artist: artist, title: title) {
-            logger.info("Cache hit for \(artist)/\(title), skipping")
+            context.logger.info("Cache hit for \(artist)/\(title), skipping")
 
             // Record history entry for cache hit
             await recordHistory(artist: artist, title: title, file: "artwork.jpg")
@@ -184,23 +181,23 @@ struct IcecastMetadataCollector: LambdaHandler {
 
         // Step 5: Select best match
         guard let song = selectBestMatch(searchResponse) else {
-            logger.warning("No search results for \(artist) - \(title), skipping")
+            context.logger.warning("No search results for \(artist) - \(title), skipping")
 
             // Record history entry even when Apple Music has no results
             await recordHistory(artist: artist, title: title, file: "nocover.jpg")
 
             return
         }
-        logger.info("Selected song: \(song.attributes.name) by \(song.attributes.artistName ?? "Unknown")")
+        context.logger.info("Selected song: \(song.attributes.name) by \(song.attributes.artistName ?? "Unknown")")
 
         // Step 6: Download artwork (if available)
         let artworkData: Data?
         if let artwork = song.attributes.artwork {
             artworkData = try await artworkDownloader.download(artwork: artwork)
-            logger.info("Downloaded artwork: \(artworkData!.count) bytes")
+            context.logger.info("Downloaded artwork: \(artworkData!.count) bytes")
         } else {
             artworkData = nil
-            logger.warning("No artwork available for \(artist) - \(title)")
+            context.logger.warning("No artwork available for \(artist) - \(title)")
         }
 
         // Step 7: Upload all three files to S3
@@ -220,7 +217,7 @@ struct IcecastMetadataCollector: LambdaHandler {
         // Record history entry for cache miss
         await recordHistory(artist: artist, title: title, file: artworkData != nil ? "artwork.jpg" : "nocover.jpg")
 
-        logger.info("Successfully collected metadata for \(artist) - \(title)")
+        context.logger.info("Successfully collected metadata for \(artist) - \(title)")
     }
 
     private func recordHistory(artist: String, title: String, file: String) async {

@@ -18,7 +18,7 @@ let package = Package(
         .executable(name: "IcecastMetadataCollector", targets: ["IcecastMetadataCollector"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/awslabs/swift-aws-lambda-runtime", from: "2.5.0"),
+        .package(url: "https://github.com/awslabs/swift-aws-lambda-runtime", from: "2.8.0"),
         .package(url: "https://github.com/awslabs/swift-aws-lambda-events.git", from: "1.4.0"),
         .package(url: "https://github.com/vapor/jwt-kit.git", from: "5.3.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.8.0"),

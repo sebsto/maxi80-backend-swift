@@ -15,22 +15,19 @@ import Foundation
 struct Maxi80Lambda: LambdaHandler {
 
     private let router: Router
-    private let logger: Logger
 
     init(
         s3Client: S3ClientProtocol? = nil,
         logger: Logger? = nil
     ) async throws {
 
-        // read the LOG_LEVEL and configure the logger
         var logger = logger ?? Logger(label: "Maxi80Lambda")
         logger.logLevel = Lambda.env("LOG_LEVEL").flatMap { Logger.Level(rawValue: $0) } ?? .error
-        logger.trace("Log level env var : \(logger.logLevel)")
-        self.logger = logger
+        logger.trace("Maxi80Lambda init started")
 
         // read the region from the environment variable
-        let region = Region(awsRegionName: Lambda.env("AWS_REGION") ?? "eu-central-1") ?? .eucentral1
-        self.logger.trace("Region: \(region)")
+        let region = Lambda.env("AWS_REGION").flatMap { Region(awsRegionName: $0) } ?? .eucentral1
+        logger.trace("Region: \(region)")
 
         // S3 configuration
         let bucket = Lambda.env("S3_BUCKET") ?? "artwork.maxi80.com"
@@ -47,18 +44,18 @@ struct Maxi80Lambda: LambdaHandler {
 
         // Initialize actions array
         let actions: [any Action] = [
-            StationAction(logger: self.logger),
+            StationAction(logger: logger),
             ArtworkAction(
                 s3Client: resolvedS3Client,
                 bucket: bucket,
                 keyPrefix: keyPrefix,
                 urlExpiration: urlExpiration,
-                logger: self.logger
+                logger: logger
             ),
         ]
 
         // Initialize router with actions
-        self.router = Router(actions: actions, logger: self.logger)
+        self.router = Router(actions: actions, logger: logger)
     }
 
     // the return value must be either APIGatewayResponse or any Encodable struct
@@ -67,7 +64,7 @@ struct Maxi80Lambda: LambdaHandler {
         header["content-type"] = "application/json"
 
         do {
-            self.logger.trace("HTTP API Message received")
+            context.logger.trace("HTTP API Message received")
 
             // Route the request to get the action
             let action = try router.route(event).get()
