@@ -23,13 +23,20 @@ struct RegionTests {
     func testRegionFromInvalidNames() {
         // When
         let invalidRegion1 = Region(awsRegionName: "invalid-region")
-        let invalidRegion2 = Region(awsRegionName: "us-invalid-1")
         let emptyRegion = Region(awsRegionName: "")
+        let numbersOnly = Region(awsRegionName: "12-east-1")
+        let upperCase = Region(awsRegionName: "US-EAST-1")
 
         // Then
         #expect(invalidRegion1 == nil)
-        #expect(invalidRegion2 == nil)
         #expect(emptyRegion == nil)
+        #expect(numbersOnly == nil)
+        #expect(upperCase == nil)
+
+        // Well-formed but unknown regions should now be accepted
+        let unknownRegion = Region(awsRegionName: "us-invalid-1")
+        #expect(unknownRegion != nil)
+        #expect(unknownRegion?.rawValue == "us-invalid-1")
     }
 
     @Test("Region raw values")

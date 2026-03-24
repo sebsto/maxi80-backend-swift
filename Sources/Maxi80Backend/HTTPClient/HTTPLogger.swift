@@ -38,7 +38,7 @@ extension Logger {
     }
 
     func response(_ response: HTTPClientResponse, data: Data?, error: Error?) {
-        self.trace("\n - - - - - - - - - - INCOMMING - - - - - - - - - - \n")
+        self.trace("\n - - - - - - - - - - INCOMING - - - - - - - - - - \n")
         defer { self.trace("\n - - - - - - - - - -  END - - - - - - - - - - \n") }
         var output = "HTTP \(response.status.code)\n"
 

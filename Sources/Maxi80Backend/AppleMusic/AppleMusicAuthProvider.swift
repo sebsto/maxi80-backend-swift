@@ -17,11 +17,11 @@ public struct AppleMusicAuthProvider: AuthorizationProvider {
     private let tokenCache = TokenCache()
 
     actor TokenCache {
-        var authTokenString: String? = nil
-        func token(_ token: String) async {
+        private var authTokenString: String? = nil
+        func setToken(_ token: String) {
             self.authTokenString = token
         }
-        func token() async -> String? {
+        func getToken() -> String? {
             self.authTokenString
         }
     }
@@ -33,7 +33,7 @@ public struct AppleMusicAuthProvider: AuthorizationProvider {
     public func authorizationHeader(logger: Logger) async throws -> [String: String] {
         let token: String
 
-        if let authToken = await self.tokenCache.token(),
+        if let authToken = await self.tokenCache.getToken(),
             await tokenFactory.validateJWTString(token: authToken)
         {
             logger.debug("Re-using a valid Apple Music Auth Token")
@@ -41,7 +41,7 @@ public struct AppleMusicAuthProvider: AuthorizationProvider {
         } else {
             logger.debug("No Apple Music Auth Token or it is expired, generating a new one")
             token = try await self.tokenFactory.generateJWTString()
-            await self.tokenCache.token(token)
+            await self.tokenCache.setToken(token)
         }
         return ["Authorization": "Bearer \(token)"]
     }

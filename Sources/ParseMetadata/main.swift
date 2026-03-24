@@ -8,8 +8,8 @@ struct ParsedMetadata: Codable {
 }
 
 // Main script
-let metadataFile = "metadata.txt"
-let outputDir = "search_results"
+let metadataFile = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "metadata.txt"
+let outputDir = CommandLine.arguments.count > 2 ? CommandLine.arguments[2] : "search_results"
 
 // Create output directory
 let fileManager = FileManager.default

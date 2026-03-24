@@ -1,6 +1,10 @@
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
 
-public struct TrackMetadata {
+public struct TrackMetadata: Sendable {
     public let artist: String?
     public let title: String?
 

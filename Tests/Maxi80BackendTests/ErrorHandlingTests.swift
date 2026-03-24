@@ -22,9 +22,9 @@ struct ErrorHandlingTests {
         let zeroByteDescription = String(describing: zeroByteError)
 
         // Then
-        #expect(badServerDescription.contains("badServerResponse"))
-        #expect(badServerDescription.contains("404"))  // Check for status code instead of "notFound"
-        #expect(zeroByteDescription.contains("zeroByteResource"))
+        #expect(badServerDescription.contains("Bad server response"))
+        #expect(badServerDescription.contains("404"))
+        #expect(zeroByteDescription.contains("zero readable bytes"))
     }
 
     @Test("MockError descriptions")

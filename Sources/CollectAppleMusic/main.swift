@@ -7,15 +7,15 @@ struct SearchError: Codable {
     let exitCode: Int32
 }
 
-func runCommand(_ command: String) -> (output: String, exitCode: Int32) {
+func runCommand(arguments: [String]) -> (output: String, exitCode: Int32) {
     let process = Process()
     let outputPipe = Pipe()
     let errorPipe = Pipe()
 
     process.standardOutput = outputPipe
     process.standardError = errorPipe
-    process.arguments = ["-c", command]
-    process.executableURL = URL(fileURLWithPath: "/bin/bash")
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/swift")
+    process.arguments = arguments
 
     do {
         try process.run()
@@ -81,15 +81,10 @@ for (index, line) in lines.enumerated() {
         continue
     }
 
-    // Escape quotes for shell command
-    let escapedQuery = searchQuery.replacingOccurrences(of: "\"", with: "\\\"")
-
-    let command = "swift run Maxi80CLI --profile maxi80 --region eu-central-1 search --types songs \"\(escapedQuery)\""
-
     let offset = 0
     print("[\(index + 1 + offset)/\(lines.count)] Searching: \(searchQuery)")
 
-    let result = runCommand(command)
+    let result = runCommand(arguments: ["run", "Maxi80CLI", "--profile", "maxi80", "--region", "eu-central-1", "search", "--types", "songs", searchQuery])
 
     let outputFile =
         "\(outputDir)/\(String(format: "%03d", index + 1 + offset))_\(searchQuery.replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: ":", with: "_")).json"

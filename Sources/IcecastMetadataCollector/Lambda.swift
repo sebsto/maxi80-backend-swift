@@ -87,9 +87,10 @@ struct IcecastMetadataCollector: LambdaHandler {
         self.httpClient = MusicAPIClient()
 
         // Initialize S3 client adapter (uses the resolved bucket region)
-        let s3Config = try await S3Client.S3ClientConfig(region: bucketRegion.rawValue)
-        let s3Client = S3Manager(s3Client: S3Client(config: s3Config), region: bucketRegion)
-        self.s3Writer = S3Writer(s3Client: s3Client, bucket: bucket, keyPrefix: keyPrefix)
+        let s3ClientConfig = try await S3Client.S3ClientConfig(region: bucketRegion.rawValue)
+        let s3Client = S3Manager(s3Client: S3Client(config: s3ClientConfig), region: bucketRegion)
+        let s3Config = S3Config(s3Client: s3Client, bucket: bucket, keyPrefix: keyPrefix)
+        self.s3Writer = S3Writer(config: s3Config)
 
         // Read MAX_HISTORY_SIZE from environment
         let maxHistorySize: Int
@@ -102,9 +103,7 @@ struct IcecastMetadataCollector: LambdaHandler {
 
         // Initialize HistoryManager
         self.historyManager = HistoryManager(
-            s3Client: s3Client,
-            bucket: bucket,
-            keyPrefix: keyPrefix,
+            config: s3Config,
             maxHistorySize: maxHistorySize
         )
 
@@ -223,7 +222,7 @@ struct IcecastMetadataCollector: LambdaHandler {
     }
 
     private func recordHistory(artist: String, title: String, file: String, logger: Logger) async {
-        let artworkKey = buildS3Key(prefix: s3Writer.keyPrefix, artist: artist, title: title, file: file)
+        let artworkKey = buildS3Key(prefix: s3Writer.config.keyPrefix, artist: artist, title: title, file: file)
         let timestamp = Date.now.formatted(.iso8601)
         await historyManager.recordEntry(artist: artist, title: title, artworkKey: artworkKey, timestamp: timestamp, logger: logger)
     }

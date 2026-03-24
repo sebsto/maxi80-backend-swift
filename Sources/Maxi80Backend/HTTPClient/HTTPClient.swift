@@ -18,7 +18,7 @@ public protocol HTTPClientProtocol {
         headers: [String: String],
         timeout: Int64,
         logger: Logger
-    ) async throws -> (Data, HTTPClientResponse)
+    ) async throws -> (Data, HTTPResponseStatus)
 }
 
 // provide common code for all network clients
@@ -41,7 +41,7 @@ public struct MusicAPIClient: HTTPClientProtocol {
         headers: [String: String] = [:],
         timeout: Int64 = 10,
         logger: Logger
-    ) async throws -> (Data, HTTPClientResponse) {
+    ) async throws -> (Data, HTTPResponseStatus) {
 
         var logger = logger
         logger[metadataKey: "Component"] = "MusicAPIClient"
@@ -70,9 +70,8 @@ public struct MusicAPIClient: HTTPClientProtocol {
             throw HTTPClientError.badServerResponse(status: response.status)
         }
 
-        guard let responseSize = Int(response.headers.first(name: "content-length") ?? ""),
-            let bytes = try? await response.body.collect(upTo: max(responseSize, 1024 * 1024 * 10))
-        else {
+        let maxSize = Int(response.headers.first(name: "content-length") ?? "") ?? (10 * 1024 * 1024)
+        guard let bytes = try? await response.body.collect(upTo: max(maxSize, 10 * 1024 * 1024)) else {
             logger.debug("No readable bytes in the response")
             throw HTTPClientError.zeroByteResource
         }
@@ -80,7 +79,7 @@ public struct MusicAPIClient: HTTPClientProtocol {
         let data = Data(bytes.readableBytesView)
         logger.response(response, data: data, error: nil)
 
-        return (data, response)
+        return (data, response.status)
     }
 
     // prepare an HTTPClientRequest for a given url, method, body, and headers
@@ -115,7 +114,14 @@ public struct MusicAPIClient: HTTPClientProtocol {
     }
 }
 
-public enum HTTPClientError: Error {
+public enum HTTPClientError: Error, CustomStringConvertible {
     case badServerResponse(status: HTTPResponseStatus)
     case zeroByteResource
+
+    public var description: String {
+        switch self {
+        case .badServerResponse(let status): return "Bad server response: \(status.code) \(status.reasonPhrase)"
+        case .zeroByteResource: return "Response body contained zero readable bytes"
+        }
+    }
 }

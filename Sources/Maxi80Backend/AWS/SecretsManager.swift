@@ -71,14 +71,11 @@ public struct SecretsManager<S: Codable>: SecretsManagerProtocol {
 
         // Get the secret value
         logger.trace("Retrieving secret: \(secretName)")
-        guard let response = try? await self.smClient.getSecretValue(input: request) else {
-            throw SecretsManagerError.invalidResponse(
-                reason: """
-                    Error calling SecretsManager client. Verify the following:
-                    1/ the secret \(secretName) exists in \(region) 
-                    2/ the calling code has secretsmanager:GetSecretValue IAM permission.
-                    """
-            )
+        let response: GetSecretValueOutput
+        do {
+            response = try await self.smClient.getSecretValue(input: request)
+        } catch {
+            throw SecretsManagerError.backendError(rootcause: error)
         }
         logger.trace("Secret retrieved")
 
@@ -95,7 +92,9 @@ public struct SecretsManager<S: Codable>: SecretsManagerProtocol {
 
     public func storeSecret(secret: S, secretName: String) async throws -> String {
         let data = try encoder.encode(secret)
-        let secretString = String(data: data, encoding: .utf8)!
+        guard let secretString = String(data: data, encoding: .utf8) else {
+            throw SecretsManagerError.decodingFailed(reason: "Failed to encode secret as UTF-8 string")
+        }
 
         let result: String
         do {

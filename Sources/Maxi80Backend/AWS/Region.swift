@@ -90,51 +90,16 @@ extension Region: CustomStringConvertible {
 
 extension Region: Codable {}
 
-// allows to create a Region from a String
-// it will only create a Region if the provided
-// region name is valid.
 extension Region {
+    /// Creates a Region from an AWS region name string.
+    /// Accepts any well-formed region string matching the pattern `xx-yyyy-N`
+    /// (e.g. "us-east-1", "eu-central-1", "ap-southeast-5").
     public init?(awsRegionName: String) {
-        self.init(rawValue: awsRegionName)
-        switch self {
-        case .afsouth1,
-            .apeast1,
-            .apnortheast1,
-            .apnortheast2,
-            .apnortheast3,
-            .apsouth1,
-            .apsouth2,
-            .apsoutheast1,
-            .apsoutheast2,
-            .apsoutheast3,
-            .apsoutheast4,
-            .cacentral1,
-            .cawest1,
-            .cnnorth1,
-            .cnnorthwest1,
-            .eucentral1,
-            .eucentral2,
-            .eunorth1,
-            .eusouth1,
-            .eusouth2,
-            .euwest1,
-            .euwest2,
-            .euwest3,
-            .mecentral1,
-            .mesouth1,
-            .saeast1,
-            .useast1,
-            .useast2,
-            .usgoveast1,
-            .usgovwest1,
-            .usisoeast1,
-            .usisowest1,
-            .usisobeast1,
-            .uswest1,
-            .uswest2:
-            return
-        default:
+        // Validate the region string matches the AWS region naming pattern
+        let pattern = #/^[a-z]{2}(-[a-z]+-\d+|-(gov|iso|isob)-[a-z]+-\d+)$/#
+        guard awsRegionName.wholeMatch(of: pattern) != nil else {
             return nil
         }
+        self.init(rawValue: awsRegionName)
     }
 }

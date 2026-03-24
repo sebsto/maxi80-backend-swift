@@ -10,11 +10,9 @@ struct AppleMusicTests {
     func testAppleMusicEndpointURL() {
         // Given
         let searchEndpoint = AppleMusicEndpoint.search
-        let testEndpoint = AppleMusicEndpoint.test
 
         // When
         let searchURL = searchEndpoint.url()
-        let testURL = testEndpoint.url()
 
         let searchURLWithArgs = searchEndpoint.url(args: [
             URLQueryItem(name: "term", value: "Beatles"),
@@ -23,22 +21,30 @@ struct AppleMusicTests {
 
         // Then
         #expect(searchURL.absoluteString == "https://api.music.apple.com/v1/catalog/fr/search")
-        #expect(testURL.absoluteString == "https://api.music.apple.com/v1/test")
         #expect(searchURLWithArgs.absoluteString.contains("term=Beatles"))
         #expect(searchURLWithArgs.absoluteString.contains("types=artists,albums"))
+
+        #if DEBUG
+        let testEndpoint = AppleMusicEndpoint.test
+        let testURL = testEndpoint.url()
+        #expect(testURL.absoluteString == "https://api.music.apple.com/v1/test")
+        #endif
     }
 
     @Test("AppleMusicEndpoint from path")
     func testAppleMusicEndpointFromPath() {
         // When
         let searchEndpoint = AppleMusicEndpoint.from(path: "/catalog/fr/search")
-        let testEndpoint = AppleMusicEndpoint.from(path: "/test")
         let invalidEndpoint = AppleMusicEndpoint.from(path: "/invalid")
 
         // Then
         #expect(searchEndpoint == .search)
-        #expect(testEndpoint == .test)
         #expect(invalidEndpoint == nil)
+
+        #if DEBUG
+        let testEndpoint = AppleMusicEndpoint.from(path: "/test")
+        #expect(testEndpoint == .test)
+        #endif
     }
 
     @Test("AppleMusicSearchType items generation")

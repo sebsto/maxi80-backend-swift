@@ -1,15 +1,7 @@
-import AsyncHTTPClient
 import Foundation
 import Logging
 import Maxi80Backend
-import NIOCore
 import NIOHTTP1
-
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-#else
-import Foundation
-#endif
 
 /// Mock HTTP client for testing
 public actor MockHTTPClient: HTTPClientProtocol {
@@ -37,7 +29,7 @@ public actor MockHTTPClient: HTTPClientProtocol {
         headers: [String: String] = [:],
         timeout: Int64 = 10,
         logger: Logger = Logger(label: "mock")
-    ) async throws -> (Data, HTTPClientResponse) {
+    ) async throws -> (Data, HTTPResponseStatus) {
 
         // Record the call
         let record = CallRecord(
@@ -62,15 +54,10 @@ public actor MockHTTPClient: HTTPClientProtocol {
         }
 
         let data = responseData[currentIndex]
+        let status = currentIndex < responseStatuses.count ? responseStatuses[currentIndex] : .ok
         currentIndex += 1
 
-        // Create a real response using httpbin.org (only for successful responses)
-        // This is a simple approach that works for testing
-        let client = HTTPClient.shared
-        let testRequest = HTTPClientRequest(url: "https://httpbin.org/status/200")
-        let response = try await client.execute(testRequest, timeout: .seconds(1))
-
-        return (data, response)
+        return (data, status)
     }
 
     // MARK: - Test helpers

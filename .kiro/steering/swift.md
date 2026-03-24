@@ -104,3 +104,10 @@ user a code snippet, with normal markdown:
 // Swift code here
 ```
 
+Never introduce new `@unchecked Sendable` conformances or use 
+detached tasks. Existing `@unchecked Sendable` in the codebase 
+(e.g. `S3Manager`) may remain until the upstream dependency adds 
+proper Sendable support, but do not add new ones. If a type 
+cannot conform to Sendable without `@unchecked`, leave it as-is 
+and document why. Refer to the Kiro Swift power for anything 
+related to Swift concurrency.

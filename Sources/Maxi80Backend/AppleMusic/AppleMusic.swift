@@ -22,14 +22,12 @@ public enum AppleMusicSearchType: String, Sendable {
     }
 }
 
-public enum AppleMusicEndpoint: String, CaseIterable, Sendable {
+public enum AppleMusicEndpoint: String, CaseIterable, Sendable, PathMatchable {
 
+    #if DEBUG
     case test = "/test"
+    #endif
     case search = "/catalog/fr/search"
-
-    public static func from(path: String) -> Self? {
-        self.allCases.first { $0.rawValue == path }
-    }
 
     private func baseURI() -> URL {
         URL(string: "https://api.music.apple.com/v1")!

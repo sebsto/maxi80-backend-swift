@@ -19,9 +19,7 @@ struct HistoryFile: Codable, Sendable, Equatable {
 }
 
 struct HistoryManager {
-    let s3Client: S3ManagerProtocol
-    let bucket: String
-    let keyPrefix: String
+    let config: S3Config
     let maxHistorySize: Int
 
     /// Appends an entry to the history and trims oldest entries if count exceeds maxSize.
@@ -37,8 +35,8 @@ struct HistoryManager {
     /// Reads the existing history file from S3. Returns an empty HistoryFile if the file doesn't exist.
     /// Throws on other S3 errors.
     func readHistory() async throws -> HistoryFile {
-        let key = "\(keyPrefix)/history.json"
-        guard let data = try await s3Client.getObject(bucket: bucket, key: key) else {
+        let key = "\(config.keyPrefix)/history.json"
+        guard let data = try await config.s3Client.getObject(bucket: config.bucket, key: key) else {
             return HistoryFile(entries: [])
         }
         return try JSONDecoder().decode(HistoryFile.self, from: data)
@@ -46,11 +44,11 @@ struct HistoryManager {
 
     /// Writes the history file to S3 as JSON with sorted keys.
     func writeHistory(_ history: HistoryFile) async throws {
-        let key = "\(keyPrefix)/history.json"
+        let key = "\(config.keyPrefix)/history.json"
         let encoder = JSONEncoder()
         encoder.outputFormatting = .sortedKeys
         let data = try encoder.encode(history)
-        try await s3Client.putObject(data: data, bucket: bucket, key: key, contentType: "application/json")
+        try await config.s3Client.putObject(data: data, bucket: config.bucket, key: key, contentType: "application/json")
     }
 
     /// Records a new history entry. Non-throwing — errors are logged internally.

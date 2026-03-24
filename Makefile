@@ -26,11 +26,10 @@ call-station:
   -H "x-api-key: $(API_KEY)" \
   -H "Accept: application/json"
 
-call-search:
+call-artwork:
 	$(eval API_KEY := $(shell aws apigateway get-api-key --api-key $(API_KEY_ID) --include-value --region $(AWS_REGION) --profile $(AWS_PROFILE) --query "value" --output text))
-	$(eval SEARCH_TERM := $(shell echo 'Pink Floyd - The wall' | jq -sRr @uri))
 	@curl -X GET \
-  "$(API_GATEWAY_URL)/search?term=$(SEARCH_TERM)" \
+  "$(API_GATEWAY_URL)/artwork?artist=Pink%20Floyd&title=The%20Wall" \
   -H "x-api-key: $(API_KEY)" \
   -H "Accept: application/json"
 
