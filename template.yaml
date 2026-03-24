@@ -4,6 +4,10 @@ Description: Maxi80 iOS app backend service
 
 Globals:
    Function:
+      Runtime: provided.al2
+      Architectures:
+         - arm64
+      Handler: bootstrap
       LoggingConfig:
          LogFormat: JSON
          ApplicationLogLevel: INFO
@@ -19,17 +23,13 @@ Resources:
       Description: This function provides the backend to the Maxi80 iOS app
       Type: AWS::Serverless::Function
       Properties:
-         Handler: bootstrap
          Environment:
             Variables:
                S3_BUCKET: !Ref MetadataBucket
                KEY_PREFIX: v2
                URL_EXPIRATION: 3600
-         Architectures:
-            - arm64
          MemorySize: 256
          CodeUri: .build/plugins/AWSLambdaPackager/outputs/AWSLambdaPackager/Maxi80Lambda/Maxi80Lambda.zip
-         Runtime: provided.al2
          Policies:
             - Statement:
                 - Effect: Allow
@@ -50,10 +50,6 @@ Resources:
       Description: Collects Icecast stream metadata and stores in S3
       Type: AWS::Serverless::Function
       Properties:
-         Handler: bootstrap
-         Runtime: provided.al2
-         Architectures:
-            - arm64
          CodeUri: .build/plugins/AWSLambdaPackager/outputs/AWSLambdaPackager/IcecastMetadataCollector/IcecastMetadataCollector.zip
          MemorySize: 256
          Timeout: 115
