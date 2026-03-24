@@ -1,4 +1,4 @@
-@testable import Maxi80Lambda
+@testable import Maxi80Backend
 
 #if canImport(FoundationEssentials)
 import FoundationEssentials
@@ -7,15 +7,18 @@ import Foundation
 #endif
 
 /// Mock S3 client for testing
-public actor MockS3Client: S3ClientProtocol {
+public actor MockS3Client: S3ManagerProtocol {
 
     private var existsResults: [Bool] = []
     private var presignedURLs: [String] = []
     private var errors: [Error] = []
     private var callRecords: [(bucket: String, key: String)] = []
     private var presignExpirations: [TimeInterval] = []
+    private var putRecords: [(data: Data, bucket: String, key: String, contentType: String)] = []
+    private var getObjectResults: [Data?] = []
     private var existsIndex = 0
     private var presignIndex = 0
+    private var getObjectIndex = 0
 
     public init() {}
 
@@ -37,15 +40,28 @@ public actor MockS3Client: S3ClientProtocol {
         return result
     }
 
-    public func presignedGetURL(bucket: String, key: String, expiration: TimeInterval) async throws -> String {
+    public func presignedGetURL(bucket: String, key: String, expiration: TimeInterval) async throws -> URL {
         presignExpirations.append(expiration)
 
         guard presignIndex < presignedURLs.count else {
-            return "https://s3.example.com/\(key)"
+            return URL(string: "https://s3.example.com/\(key)")!
         }
 
         let result = presignedURLs[presignIndex]
         presignIndex += 1
+        return URL(string: result)!
+    }
+
+    public func putObject(data: Data, bucket: String, key: String, contentType: String) async throws {
+        putRecords.append((data: data, bucket: bucket, key: key, contentType: contentType))
+    }
+
+    public func getObject(bucket: String, key: String) async throws -> Data? {
+        guard getObjectIndex < getObjectResults.count else {
+            return nil
+        }
+        let result = getObjectResults[getObjectIndex]
+        getObjectIndex += 1
         return result
     }
 
@@ -63,6 +79,10 @@ public actor MockS3Client: S3ClientProtocol {
         errors.append(error)
     }
 
+    public func setGetObjectResult(_ data: Data?) {
+        getObjectResults.append(data)
+    }
+
     public func getCallRecords() -> [(bucket: String, key: String)] {
         callRecords
     }
@@ -71,13 +91,20 @@ public actor MockS3Client: S3ClientProtocol {
         presignExpirations
     }
 
+    public func getPutRecords() -> [(data: Data, bucket: String, key: String, contentType: String)] {
+        putRecords
+    }
+
     public func reset() {
         existsResults.removeAll()
         presignedURLs.removeAll()
         errors.removeAll()
         callRecords.removeAll()
         presignExpirations.removeAll()
+        putRecords.removeAll()
+        getObjectResults.removeAll()
         existsIndex = 0
         presignIndex = 0
+        getObjectIndex = 0
     }
 }

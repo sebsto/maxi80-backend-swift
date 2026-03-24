@@ -10,7 +10,22 @@ import FoundationEssentials
 import Foundation
 #endif
 
-public struct SecretsManager<S: Codable> {
+// MARK: - Secrets Manager Protocol
+
+/// Protocol abstracting secrets operations, enabling testability via mocks.
+public protocol SecretsManagerProtocol {
+    associatedtype S: Codable
+
+    /// Retrieve and decode a secret by name.
+    func getSecret(secretName: String) async throws -> S
+
+    /// Store (or update) a secret by name. Returns the secret ARN.
+    func storeSecret(secret: S, secretName: String) async throws -> String
+}
+
+// MARK: - Secrets Manager
+
+public struct SecretsManager<S: Codable>: SecretsManagerProtocol {
 
     private let smClient: SecretsManagerClient
     private let decoder = JSONDecoder()

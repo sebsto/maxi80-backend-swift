@@ -1,5 +1,4 @@
 import AWSLambdaEvents
-@preconcurrency import AWSS3
 import HTTPTypes
 import Logging
 import Maxi80Backend
@@ -47,13 +46,13 @@ public struct ArtworkAction: Action {
     public let endpoint: Maxi80Endpoint = .artwork
     public let method: HTTPRequest.Method = .get
 
-    private let s3Client: S3ClientProtocol
+    private let s3Client: S3ManagerProtocol
     private let bucket: String
     private let keyPrefix: String
     private let urlExpiration: TimeInterval
 
     public init(
-        s3Client: S3ClientProtocol,
+        s3Client: S3ManagerProtocol,
         bucket: String,
         keyPrefix: String,
         urlExpiration: TimeInterval
@@ -102,64 +101,15 @@ public enum ActionError: Error, CustomStringConvertible {
     }
 }
 
-// MARK: - S3 Client Protocol
 
-/// Protocol abstracting S3 operations for artwork lookup, enabling testability via mocks.
-public protocol S3ClientProtocol: Sendable {
-    /// Check if an object exists at the given bucket/key.
-    /// Returns true if exists, false if not found.
-    /// Throws for unexpected S3 errors.
-    func objectExists(bucket: String, key: String) async throws -> Bool
-
-    /// Generate a pre-signed GetObject URL for the given bucket/key with the specified expiration.
-    func presignedGetURL(bucket: String, key: String, expiration: TimeInterval) async throws -> String
-}
-
-// MARK: - AWS S3 Client Adapter
-
-/// Concrete implementation wrapping `AWSS3.S3Client` for HeadObject and pre-signed URL generation.
-///
-/// Safety invariant for `@unchecked Sendable`: This struct holds an `S3Client` instance which
-/// is not yet annotated as `Sendable` by the AWS SDK for Swift. The `S3Client` is internally
-/// thread-safe (it uses its own connection pool and serialization). The `Region` stored property
-/// is a value type and immutable after initialization.
-// TODO: Remove `@unchecked Sendable` once the AWS SDK for Swift marks `S3Client` as `Sendable`
-public struct AWSS3ClientAdapter: S3ClientProtocol, @unchecked Sendable {
-    private let s3Client: S3Client
-    private let region: Region
-
-    public init(s3Client: S3Client, region: Region) {
-        self.s3Client = s3Client
-        self.region = region
-    }
-
-    public func objectExists(bucket: String, key: String) async throws -> Bool {
-        do {
-            _ = try await s3Client.headObject(input: HeadObjectInput(bucket: bucket, key: key))
-            return true
-        } catch is AWSS3.NotFound {
-            return false
-        }
-        // Other errors propagate as-is
-    }
-
-    public func presignedGetURL(bucket: String, key: String, expiration: TimeInterval) async throws -> String {
-        let input = GetObjectInput(bucket: bucket, key: key)
-        let config = try await S3Client.S3ClientConfig(region: region.rawValue)
-        guard let url = try await input.presignURL(config: config, expiration: expiration) else {
-            throw ActionError.invalidParameter(name: "key", reason: "Failed to generate pre-signed URL")
-        }
-        return url.absoluteString
-    }
-}
 
 // MARK: - Artwork Response
 
 /// JSON response model for the artwork endpoint.
 public struct ArtworkResponse: Codable, Sendable {
-    public let url: String
+    public let url: URL
 
-    public init(url: String) {
+    public init(url: URL) {
         self.url = url
     }
 }

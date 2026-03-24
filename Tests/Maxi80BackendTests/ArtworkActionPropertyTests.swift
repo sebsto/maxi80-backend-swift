@@ -88,7 +88,7 @@ struct ArtworkActionPropertyTests {
             #expect(!data.isEmpty)
 
             let response = try JSONDecoder().decode(ArtworkResponse.self, from: data)
-            #expect(!response.url.isEmpty)
+            #expect(!response.url.absoluteString.isEmpty)
         }
     }
 

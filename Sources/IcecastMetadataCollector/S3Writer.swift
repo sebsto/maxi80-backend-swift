@@ -1,5 +1,5 @@
-import AWSS3
 import Logging
+import Maxi80Backend
 
 #if canImport(FoundationEssentials)
 import FoundationEssentials
@@ -13,23 +13,14 @@ func buildS3Key(prefix: String, artist: String, title: String, file: String) -> 
 }
 
 struct S3Writer {
-    let s3Client: S3Client
+    let s3Client: S3ManagerProtocol
     let bucket: String
     let keyPrefix: String
 
     /// Checks if metadata.json already exists for this artist/title combination.
     func exists(artist: String, title: String) async throws -> Bool {
         let key = buildS3Key(prefix: keyPrefix, artist: artist, title: title, file: "metadata.json")
-        do {
-            _ = try await s3Client.headObject(input: HeadObjectInput(bucket: bucket, key: key))
-            return true
-        } catch is AWSS3.NotFound {
-            return false
-        } catch {
-            // For HeadObject, a 404 may come as a different error type
-            // Check if it's a "not found" type error
-            return false
-        }
+        return try await s3Client.objectExists(bucket: bucket, key: key)
     }
 
     func writeMetadata(_ metadata: CollectedMetadata, artist: String, title: String, logger: Logger) async throws {
@@ -56,12 +47,7 @@ struct S3Writer {
     private func putObject(data: Data, key: String, contentType: String, file: String, logger: Logger) async throws {
         logger.debug("Writing \(file) to s3://\(bucket)/\(key)")
         do {
-            _ = try await s3Client.putObject(input: PutObjectInput(
-                body: .data(data),
-                bucket: bucket,
-                contentType: contentType,
-                key: key
-            ))
+            try await s3Client.putObject(data: data, bucket: bucket, key: key, contentType: contentType)
         } catch {
             logger.error("S3 PutObject failed for \(file): \(String(describing: error))")
             throw CollectorError.s3WriteFailed(file: file, reason: "\(error)")

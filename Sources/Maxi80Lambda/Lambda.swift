@@ -17,7 +17,7 @@ struct Maxi80Lambda: LambdaHandler {
     private let router: Router
 
     init(
-        s3Client: S3ClientProtocol? = nil,
+        s3Client: S3ManagerProtocol? = nil,
         logger: Logger? = nil
     ) async throws {
 
@@ -33,12 +33,12 @@ struct Maxi80Lambda: LambdaHandler {
         let keyPrefix = Lambda.env("KEY_PREFIX") ?? "v2"
         let urlExpiration = TimeInterval(Lambda.env("URL_EXPIRATION").flatMap { Int($0) } ?? 3600)
 
-        let resolvedS3Client: S3ClientProtocol
+        let resolvedS3Client: S3ManagerProtocol
         if let provided = s3Client {
             resolvedS3Client = provided
         } else {
             let s3 = try S3Client(region: region.rawValue)
-            resolvedS3Client = AWSS3ClientAdapter(s3Client: s3, region: region)
+            resolvedS3Client = S3Manager(s3Client: s3, region: region)
         }
 
         // Initialize actions array
@@ -66,7 +66,8 @@ struct Maxi80Lambda: LambdaHandler {
 
             // Route the request to get the action
             let action = try router.route(event, logger: context.logger).get()
-
+            context.logger.trace("Action identified: \(action)")
+            
             // Execute the action
             let responseData = try await action.handle(event: event, logger: context.logger)
 

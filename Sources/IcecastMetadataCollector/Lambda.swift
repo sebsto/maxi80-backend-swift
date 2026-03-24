@@ -1,6 +1,6 @@
 import AWSLambdaEvents
 import AWSLambdaRuntime
-import AWSS3
+@preconcurrency import AWSS3
 import Logging
 import Maxi80Backend
 
@@ -86,9 +86,9 @@ struct IcecastMetadataCollector: LambdaHandler {
         // Initialize HTTP client for Apple Music API
         self.httpClient = MusicAPIClient()
 
-        // Initialize S3Writer (uses the resolved bucket region)
+        // Initialize S3 client adapter (uses the resolved bucket region)
         let s3Config = try await S3Client.S3ClientConfig(region: bucketRegion.rawValue)
-        let s3Client = S3Client(config: s3Config)
+        let s3Client = S3Manager(s3Client: S3Client(config: s3Config), region: bucketRegion)
         self.s3Writer = S3Writer(s3Client: s3Client, bucket: bucket, keyPrefix: keyPrefix)
 
         // Read MAX_HISTORY_SIZE from environment

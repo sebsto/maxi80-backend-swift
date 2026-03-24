@@ -131,7 +131,7 @@ struct RouterTests {
 
         let data = try await action.handle(event: event, logger: logger)
         let response = try JSONDecoder().decode(ArtworkResponse.self, from: data)
-        #expect(!response.url.isEmpty)
+        #expect(!response.url.absoluteString.isEmpty)
     }
 
     @Test("ArtworkAction returns empty data when artwork not found")

@@ -1,5 +1,5 @@
-import AWSS3
 import Logging
+import Maxi80Backend
 
 #if canImport(FoundationEssentials)
 import FoundationEssentials
@@ -18,36 +18,30 @@ struct HistoryFile: Codable, Sendable, Equatable {
     var entries: [HistoryEntry]
 }
 
-/// Appends an entry to the history and trims oldest entries if count exceeds maxSize.
-func appendAndTrim(entry: HistoryEntry, to history: HistoryFile, maxSize: Int) -> HistoryFile {
-    var entries = history.entries
-    entries.append(entry)
-    if entries.count > maxSize {
-        entries = Array(entries.suffix(maxSize))
-    }
-    return HistoryFile(entries: entries)
-}
-
 struct HistoryManager {
-    let s3Client: S3Client
+    let s3Client: S3ManagerProtocol
     let bucket: String
     let keyPrefix: String
     let maxHistorySize: Int
+
+    /// Appends an entry to the history and trims oldest entries if count exceeds maxSize.
+    static func appendAndTrim(entry: HistoryEntry, to history: HistoryFile, maxSize: Int) -> HistoryFile {
+        var entries = history.entries
+        entries.append(entry)
+        if entries.count > maxSize {
+            entries = Array(entries.suffix(maxSize))
+        }
+        return HistoryFile(entries: entries)
+    }
 
     /// Reads the existing history file from S3. Returns an empty HistoryFile if the file doesn't exist.
     /// Throws on other S3 errors.
     func readHistory() async throws -> HistoryFile {
         let key = "\(keyPrefix)/history.json"
-        do {
-            let output = try await s3Client.getObject(input: GetObjectInput(bucket: bucket, key: key))
-            guard let body = output.body,
-                  let data = try await body.readData() else {
-                return HistoryFile(entries: [])
-            }
-            return try JSONDecoder().decode(HistoryFile.self, from: data)
-        } catch is AWSS3.NoSuchKey {
+        guard let data = try await s3Client.getObject(bucket: bucket, key: key) else {
             return HistoryFile(entries: [])
         }
+        return try JSONDecoder().decode(HistoryFile.self, from: data)
     }
 
     /// Writes the history file to S3 as JSON with sorted keys.
@@ -56,12 +50,7 @@ struct HistoryManager {
         let encoder = JSONEncoder()
         encoder.outputFormatting = .sortedKeys
         let data = try encoder.encode(history)
-        _ = try await s3Client.putObject(input: PutObjectInput(
-            body: .data(data),
-            bucket: bucket,
-            contentType: "application/json",
-            key: key
-        ))
+        try await s3Client.putObject(data: data, bucket: bucket, key: key, contentType: "application/json")
     }
 
     /// Records a new history entry. Non-throwing — errors are logged internally.
@@ -83,7 +72,7 @@ struct HistoryManager {
         }
 
         let entry = HistoryEntry(artist: artist, title: title, artwork: artworkKey, timestamp: timestamp)
-        let updated = appendAndTrim(entry: entry, to: history, maxSize: maxHistorySize)
+        let updated = Self.appendAndTrim(entry: entry, to: history, maxSize: maxHistorySize)
 
         do {
             try await writeHistory(updated)

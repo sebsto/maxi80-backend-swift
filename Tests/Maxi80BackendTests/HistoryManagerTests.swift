@@ -152,7 +152,7 @@ extension HistoryManagerTests {
     @Test("Property 3: Size invariant after append-and-trim",
           arguments: generateSizeInvariantTestCases(count: 100))
     func sizeInvariantAfterAppendAndTrim(testCase: SizeInvariantTestCase) {
-        let result = appendAndTrim(
+        let result = HistoryManager.appendAndTrim(
             entry: testCase.newEntry,
             to: testCase.historyFile,
             maxSize: testCase.maxSize
@@ -209,7 +209,7 @@ extension HistoryManagerTests {
     @Test("Property 4: Ordering — new entry is last, oldest trimmed first",
           arguments: generateOrderingTestCases(count: 100))
     func orderingNewEntryIsLastOldestTrimmedFirst(testCase: OrderingTestCase) {
-        let result = appendAndTrim(
+        let result = HistoryManager.appendAndTrim(
             entry: testCase.newEntry,
             to: testCase.historyFile,
             maxSize: testCase.maxSize
@@ -292,7 +292,7 @@ extension HistoryManagerTests {
     @Test("Property 5: Duplicate entries are preserved",
           arguments: generateDuplicateTestCases(count: 100))
     func duplicateEntriesArePreserved(testCase: DuplicateTestCase) {
-        let result = appendAndTrim(
+        let result = HistoryManager.appendAndTrim(
             entry: testCase.newEntry,
             to: testCase.historyFile,
             maxSize: testCase.maxSize
@@ -326,7 +326,7 @@ extension HistoryManagerTests {
         let emptyHistory = HistoryFile(entries: [])
         let entry = HistoryEntry(artist: "Duran Duran", title: "Rio", artwork: "collected/Duran Duran/Rio/artwork.jpg", timestamp: "2025-07-15T14:30:00Z")
 
-        let result = appendAndTrim(entry: entry, to: emptyHistory, maxSize: 10)
+        let result = HistoryManager.appendAndTrim(entry: entry, to: emptyHistory, maxSize: 10)
 
         #expect(result.entries.count == 1, "Should have exactly 1 entry after appending to empty history")
         #expect(result.entries.first == entry, "The single entry should be the one we appended")
@@ -342,7 +342,7 @@ extension HistoryManagerTests {
         let history = HistoryFile(entries: originalEntries)
         let newEntry = HistoryEntry(artist: "New Artist", title: "New Title", artwork: "art/new.jpg", timestamp: "2025-07-15T15:00:00Z")
 
-        let result = appendAndTrim(entry: newEntry, to: history, maxSize: maxSize)
+        let result = HistoryManager.appendAndTrim(entry: newEntry, to: history, maxSize: maxSize)
 
         #expect(result.entries.count == maxSize, "Count should stay at maxSize (\(maxSize)), not \(result.entries.count)")
         #expect(result.entries.last == newEntry, "Last entry should be the newly appended one")
@@ -358,7 +358,7 @@ extension HistoryManagerTests {
         let history = HistoryFile(entries: entries)
         let newEntry = HistoryEntry(artist: "Solo Artist", title: "Solo Title", artwork: "art/solo.jpg", timestamp: "2025-07-15T15:00:00Z")
 
-        let result = appendAndTrim(entry: newEntry, to: history, maxSize: 1)
+        let result = HistoryManager.appendAndTrim(entry: newEntry, to: history, maxSize: 1)
 
         #expect(result.entries.count == 1, "Should have exactly 1 entry when maxSize is 1, got \(result.entries.count)")
         #expect(result.entries.first == newEntry, "The single entry should be the newly appended one")
