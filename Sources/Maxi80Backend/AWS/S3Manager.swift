@@ -1,4 +1,4 @@
-@preconcurrency import AWSS3
+import AWSS3
 import Logging
 
 #if canImport(FoundationEssentials)
@@ -29,13 +29,7 @@ public protocol S3ManagerProtocol: Sendable {
 // MARK: - AWS S3 Client Adapter
 
 /// Concrete implementation wrapping `AWSS3.S3Client`.
-///
-/// Safety invariant for `@unchecked Sendable`: This struct holds an `S3Client` instance which
-/// is not yet annotated as `Sendable` by the AWS SDK for Swift. The `S3Client` is internally
-/// thread-safe (it uses its own connection pool and serialization). The `Region` stored property
-/// is a value type and immutable after initialization.
-// TODO: Remove `@unchecked Sendable` once the AWS SDK for Swift marks `S3Client` as `Sendable`
-public struct S3Manager: S3ManagerProtocol, @unchecked Sendable {
+public struct S3Manager: S3ManagerProtocol, Sendable {
     private let s3Client: S3Client
     private let region: Region
 

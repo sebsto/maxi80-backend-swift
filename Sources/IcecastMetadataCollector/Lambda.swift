@@ -1,6 +1,6 @@
 import AWSLambdaEvents
 import AWSLambdaRuntime
-@preconcurrency import AWSS3
+import AWSS3
 import Logging
 import Maxi80Backend
 
