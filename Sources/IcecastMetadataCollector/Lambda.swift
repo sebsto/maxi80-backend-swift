@@ -22,8 +22,8 @@ struct IcecastMetadataCollector: LambdaHandler {
     private let historyManager: HistoryManager
 
     init() async throws {
-        var logger = Logger(label: "IcecastMetadataCollector")
-        logger.logLevel = Lambda.env("LOG_LEVEL").flatMap { Logger.Level(rawValue: $0) } ?? .info
+        let loggingConfig = LoggingConfiguration(logger: Logger(label: "IcecastMetadataCollector"))
+        let logger = loggingConfig.makeRuntimeLogger()
 
         // Read required environment variables
         guard let streamURL = Lambda.env("STREAM_URL") else {
@@ -44,8 +44,6 @@ struct IcecastMetadataCollector: LambdaHandler {
 
         // Resolve bucket region and retrieve Apple Music secret in parallel.
         // These two async operations are independent — both only need env-derived values.
-        // Snapshot logger as a let so child tasks can safely capture it
-        let initLogger = logger
 
         async let resolvedBucketRegion: Region = {
             do {
@@ -67,7 +65,7 @@ struct IcecastMetadataCollector: LambdaHandler {
 
         async let resolvedTokenFactory: JWTTokenFactory = {
             let secretsManager = try SecretsManager<AppleMusicSecret>(
-                region: configuredRegion, logger: initLogger
+                region: configuredRegion, logger: logger
             )
             let secret = try await secretsManager.getSecret(secretName: secretName)
             return JWTTokenFactory(

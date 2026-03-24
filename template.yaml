@@ -25,7 +25,6 @@ Resources:
                S3_BUCKET: !Ref MetadataBucket
                KEY_PREFIX: v2
                URL_EXPIRATION: 3600
-               LOG_LEVEL: trace # for init
          Architectures:
             - arm64
          MemorySize: 256
@@ -64,7 +63,6 @@ Resources:
                S3_BUCKET: !Ref MetadataBucket
                KEY_PREFIX: v2
                SECRETS: Maxi80-AppleMusicKey
-               LOG_LEVEL: info # for init
                MAX_HISTORY_SIZE: 100
          Policies:
             - Statement:

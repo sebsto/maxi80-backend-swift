@@ -21,8 +21,7 @@ struct Maxi80Lambda: LambdaHandler {
         logger: Logger? = nil
     ) async throws {
 
-        var logger = logger ?? Logger(label: "Maxi80Lambda")
-        logger.logLevel = Lambda.env("LOG_LEVEL").flatMap { Logger.Level(rawValue: $0) } ?? .error
+        let logger = logger ?? LoggingConfiguration(logger: Logger(label: "Maxi80Lambda")).makeRuntimeLogger()
         logger.trace("Maxi80Lambda init started")
 
         // read the region from the environment variable
