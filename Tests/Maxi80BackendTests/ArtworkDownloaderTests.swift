@@ -1,4 +1,3 @@
-import Logging
 import Testing
 
 @testable import IcecastMetadataCollector
@@ -6,7 +5,7 @@ import Testing
 @Suite("Artwork Downloader Tests")
 struct ArtworkDownloaderTests {
 
-    let downloader = ArtworkDownloader(logger: Logger(label: "test"))
+    let downloader = ArtworkDownloader()
 
     struct ArtworkURLTestCase: CustomStringConvertible, Sendable {
         let template: String

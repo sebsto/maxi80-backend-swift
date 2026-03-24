@@ -9,10 +9,9 @@ import Foundation
 #endif
 
 struct IcecastReader {
-    let logger: Logger
 
     /// Connects to an Icecast stream and extracts the first non-empty StreamTitle metadata.
-    func readMetadata(from streamURL: String) async throws -> String {
+    func readMetadata(from streamURL: String, logger: Logger) async throws -> String {
         let request = buildRequest(for: streamURL)
 
         logger.debug("Connecting to Icecast stream: \(streamURL)")

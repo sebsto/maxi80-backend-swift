@@ -13,6 +13,8 @@ private func randomNonEmptyString() -> String {
     return String((0..<length).map { _ in chars.randomElement()! })
 }
 
+private let testLogger = Logger(label: "test")
+
 private func makeArtworkAction(
     s3Client: MockS3Client,
     bucket: String = "test-bucket",
@@ -23,8 +25,7 @@ private func makeArtworkAction(
         s3Client: s3Client,
         bucket: bucket,
         keyPrefix: keyPrefix,
-        urlExpiration: urlExpiration,
-        logger: Logger(label: "test")
+        urlExpiration: urlExpiration
     )
 }
 
@@ -57,7 +58,7 @@ struct ArtworkActionPropertyTests {
             let action = makeArtworkAction(s3Client: mockS3, keyPrefix: keyPrefix)
             let event = try makeEvent(artist: artist, title: title)
 
-            _ = try await action.handle(event: event)
+            _ = try await action.handle(event: event, logger: testLogger)
 
             let records = await mockS3.getCallRecords()
             #expect(records.count == 1)
@@ -83,7 +84,7 @@ struct ArtworkActionPropertyTests {
             let action = makeArtworkAction(s3Client: mockS3)
             let event = try makeEvent(artist: artist, title: title)
 
-            let data = try await action.handle(event: event)
+            let data = try await action.handle(event: event, logger: testLogger)
             #expect(!data.isEmpty)
 
             let response = try JSONDecoder().decode(ArtworkResponse.self, from: data)
@@ -106,7 +107,7 @@ struct ArtworkActionPropertyTests {
             let action = makeArtworkAction(s3Client: mockS3)
             let event = try makeEvent(artist: artist, title: title)
 
-            let data = try await action.handle(event: event)
+            let data = try await action.handle(event: event, logger: testLogger)
             #expect(data.isEmpty)
         }
     }
@@ -126,7 +127,7 @@ struct ArtworkActionPropertyTests {
             let action = makeArtworkAction(s3Client: mockS3, urlExpiration: expiration)
             let event = try makeEvent(artist: randomNonEmptyString(), title: randomNonEmptyString())
 
-            _ = try await action.handle(event: event)
+            _ = try await action.handle(event: event, logger: testLogger)
 
             let expirations = await mockS3.getPresignExpirations()
             #expect(expirations.count == 1)
@@ -151,7 +152,7 @@ struct ArtworkActionPropertyTests {
             let event = try makeEvent(artist: randomNonEmptyString(), title: randomNonEmptyString())
 
             await #expect(throws: (any Error).self) {
-                _ = try await action.handle(event: event)
+                _ = try await action.handle(event: event, logger: testLogger)
             }
         }
     }

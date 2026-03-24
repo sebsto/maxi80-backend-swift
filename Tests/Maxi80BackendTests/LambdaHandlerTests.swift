@@ -1,7 +1,6 @@
 import AWSLambdaEvents
 import Foundation
 import HTTPTypes
-import Logging
 import NIOHTTP1
 import Testing
 
@@ -15,12 +14,10 @@ struct LambdaHandlerTests {
     func testLambdaInitialization() async throws {
         // Given
         let mockS3Client = MockS3Client()
-        let logger = Logger(label: "test")
 
         // When
         let lambda = try await Maxi80Lambda(
-            s3Client: mockS3Client,
-            logger: logger
+            s3Client: mockS3Client
         )
 
         // Then - if we get here without throwing, initialization succeeded
@@ -31,11 +28,9 @@ struct LambdaHandlerTests {
     func testStationLogic() async throws {
         // Given
         let mockS3Client = MockS3Client()
-        let logger = Logger(label: "test")
 
         let lambda = try await Maxi80Lambda(
-            s3Client: mockS3Client,
-            logger: logger
+            s3Client: mockS3Client
         )
 
         _ = lambda
@@ -54,11 +49,9 @@ struct LambdaHandlerTests {
     func testArtworkValidation() async throws {
         // Given
         let mockS3Client = MockS3Client()
-        let logger = Logger(label: "test")
 
         _ = try await Maxi80Lambda(
-            s3Client: mockS3Client,
-            logger: logger
+            s3Client: mockS3Client
         )
 
         // Test endpoint validation

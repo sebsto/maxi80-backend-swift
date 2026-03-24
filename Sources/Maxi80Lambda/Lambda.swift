@@ -43,18 +43,17 @@ struct Maxi80Lambda: LambdaHandler {
 
         // Initialize actions array
         let actions: [any Action] = [
-            StationAction(logger: logger),
+            StationAction(),
             ArtworkAction(
                 s3Client: resolvedS3Client,
                 bucket: bucket,
                 keyPrefix: keyPrefix,
-                urlExpiration: urlExpiration,
-                logger: logger
+                urlExpiration: urlExpiration
             ),
         ]
 
         // Initialize router with actions
-        self.router = Router(actions: actions, logger: logger)
+        self.router = Router(actions: actions)
     }
 
     // the return value must be either APIGatewayResponse or any Encodable struct
@@ -66,10 +65,10 @@ struct Maxi80Lambda: LambdaHandler {
             context.logger.trace("HTTP API Message received")
 
             // Route the request to get the action
-            let action = try router.route(event).get()
+            let action = try router.route(event, logger: context.logger).get()
 
             // Execute the action
-            let responseData = try await action.handle(event: event)
+            let responseData = try await action.handle(event: event, logger: context.logger)
 
             if responseData.isEmpty {
                 return APIGatewayResponse(statusCode: .noContent)

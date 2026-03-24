@@ -33,7 +33,6 @@ struct HistoryManager {
     let bucket: String
     let keyPrefix: String
     let maxHistorySize: Int
-    let logger: Logger
 
     /// Reads the existing history file from S3. Returns an empty HistoryFile if the file doesn't exist.
     /// Throws on other S3 errors.
@@ -67,7 +66,7 @@ struct HistoryManager {
 
     /// Records a new history entry. Non-throwing — errors are logged internally.
     /// Skips writing if the most recent entry (by timestamp) already matches on artist, title, and artwork.
-    func recordEntry(artist: String, title: String, artworkKey: String, timestamp: String) async {
+    func recordEntry(artist: String, title: String, artworkKey: String, timestamp: String, logger: Logger) async {
         var history: HistoryFile
         do {
             history = try await readHistory()

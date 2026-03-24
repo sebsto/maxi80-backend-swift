@@ -34,8 +34,7 @@ struct RouterTests {
 
     @Test("StationAction has correct endpoint and method")
     func testStationActionProperties() {
-        let logger = Logger(label: "test")
-        let action = StationAction(logger: logger)
+        let action = StationAction()
 
         #expect(action.endpoint == .station)
         #expect(action.method == .get)
@@ -43,15 +42,13 @@ struct RouterTests {
 
     @Test("ArtworkAction has correct endpoint and method")
     func testArtworkActionProperties() {
-        let logger = Logger(label: "test")
         let mockS3Client = MockS3Client()
 
         let action = ArtworkAction(
             s3Client: mockS3Client,
             bucket: "test-bucket",
             keyPrefix: "v2",
-            urlExpiration: 3600,
-            logger: logger
+            urlExpiration: 3600
         )
 
         #expect(action.endpoint == .artwork)
@@ -61,10 +58,10 @@ struct RouterTests {
     @Test("StationAction handles request correctly")
     func testStationActionHandle() async throws {
         let logger = Logger(label: "test")
-        let action = StationAction(logger: logger)
+        let action = StationAction()
 
         let event = try TestHelpers.createAPIGatewayRequest(path: "/station")
-        let data = try await action.handle(event: event)
+        let data = try await action.handle(event: event, logger: logger)
 
         // Decode the response
         let station = try JSONDecoder().decode(Station.self, from: data)
@@ -81,14 +78,13 @@ struct RouterTests {
             s3Client: mockS3Client,
             bucket: "test-bucket",
             keyPrefix: "v2",
-            urlExpiration: 3600,
-            logger: logger
+            urlExpiration: 3600
         )
 
         let event = try TestHelpers.createAPIGatewayRequest(path: "/artwork")
 
         await #expect(throws: ActionError.self) {
-            _ = try await action.handle(event: event)
+            _ = try await action.handle(event: event, logger: logger)
         }
     }
 
@@ -101,8 +97,7 @@ struct RouterTests {
             s3Client: mockS3Client,
             bucket: "test-bucket",
             keyPrefix: "v2",
-            urlExpiration: 3600,
-            logger: logger
+            urlExpiration: 3600
         )
 
         let event = try TestHelpers.createAPIGatewayRequest(
@@ -111,7 +106,7 @@ struct RouterTests {
         )
 
         await #expect(throws: ActionError.self) {
-            _ = try await action.handle(event: event)
+            _ = try await action.handle(event: event, logger: logger)
         }
     }
 
@@ -126,8 +121,7 @@ struct RouterTests {
             s3Client: mockS3Client,
             bucket: "test-bucket",
             keyPrefix: "v2",
-            urlExpiration: 3600,
-            logger: logger
+            urlExpiration: 3600
         )
 
         let event = try TestHelpers.createAPIGatewayRequest(
@@ -135,7 +129,7 @@ struct RouterTests {
             queryStringParameters: ["artist": "Duran Duran", "title": "Rio"]
         )
 
-        let data = try await action.handle(event: event)
+        let data = try await action.handle(event: event, logger: logger)
         let response = try JSONDecoder().decode(ArtworkResponse.self, from: data)
         #expect(!response.url.isEmpty)
     }
@@ -150,8 +144,7 @@ struct RouterTests {
             s3Client: mockS3Client,
             bucket: "test-bucket",
             keyPrefix: "v2",
-            urlExpiration: 3600,
-            logger: logger
+            urlExpiration: 3600
         )
 
         let event = try TestHelpers.createAPIGatewayRequest(
@@ -159,7 +152,7 @@ struct RouterTests {
             queryStringParameters: ["artist": "Unknown", "title": "Song"]
         )
 
-        let data = try await action.handle(event: event)
+        let data = try await action.handle(event: event, logger: logger)
         #expect(data.isEmpty)
     }
 
@@ -168,11 +161,11 @@ struct RouterTests {
     @Test("Router routes GET /station to StationAction")
     func testRouterStationEndpoint() throws {
         let logger = Logger(label: "test")
-        let stationAction = StationAction(logger: logger)
-        let router = Router(actions: [stationAction], logger: logger)
+        let stationAction = StationAction()
+        let router = Router(actions: [stationAction])
 
         let event = try TestHelpers.createAPIGatewayRequest(path: "/station", httpMethod: "GET")
-        let result = router.route(event)
+        let result = router.route(event, logger: logger)
 
         guard case .success(let action) = result else {
             Issue.record("Expected success but got failure")
@@ -192,13 +185,12 @@ struct RouterTests {
             s3Client: mockS3Client,
             bucket: "test-bucket",
             keyPrefix: "v2",
-            urlExpiration: 3600,
-            logger: logger
+            urlExpiration: 3600
         )
-        let router = Router(actions: [artworkAction], logger: logger)
+        let router = Router(actions: [artworkAction])
 
         let event = try TestHelpers.createAPIGatewayRequest(path: "/artwork", httpMethod: "GET")
-        let result = router.route(event)
+        let result = router.route(event, logger: logger)
 
         guard case .success(let action) = result else {
             Issue.record("Expected success but got failure")
@@ -212,10 +204,10 @@ struct RouterTests {
     @Test("Router returns pathNotFound for invalid path")
     func testRouterInvalidPath() throws {
         let logger = Logger(label: "test")
-        let router = Router(actions: [], logger: logger)
+        let router = Router(actions: [])
 
         let event = try TestHelpers.createAPIGatewayRequest(path: "/invalid", httpMethod: "GET")
-        let result = router.route(event)
+        let result = router.route(event, logger: logger)
 
         guard case .failure(let error) = result else {
             Issue.record("Expected failure but got success")
@@ -233,12 +225,12 @@ struct RouterTests {
     @Test("Router returns methodNotAllowed for unsupported HTTP method")
     func testRouterMethodNotAllowed() throws {
         let logger = Logger(label: "test")
-        let stationAction = StationAction(logger: logger)
-        let router = Router(actions: [stationAction], logger: logger)
+        let stationAction = StationAction()
+        let router = Router(actions: [stationAction])
 
         // StationAction only supports GET, try POST
         let event = try TestHelpers.createAPIGatewayRequest(path: "/station", httpMethod: "POST")
-        let result = router.route(event)
+        let result = router.route(event, logger: logger)
 
         guard case .failure(let error) = result else {
             Issue.record("Expected failure but got success")
@@ -259,16 +251,16 @@ struct RouterTests {
         let logger = Logger(label: "test")
 
         // Create GET action
-        let getAction = StationAction(logger: logger)
+        let getAction = StationAction()
 
         // Create a mock POST action for the same endpoint
-        let postAction = MockPostStationAction(logger: logger)
+        let postAction = MockPostStationAction()
 
-        let router = Router(actions: [getAction, postAction], logger: logger)
+        let router = Router(actions: [getAction, postAction])
 
         // Test GET
         let getEvent = try TestHelpers.createAPIGatewayRequest(path: "/station", httpMethod: "GET")
-        let getResult = router.route(getEvent)
+        let getResult = router.route(getEvent, logger: logger)
 
         guard case .success(let getRoutedAction) = getResult else {
             Issue.record("Expected success for GET")
@@ -278,7 +270,7 @@ struct RouterTests {
 
         // Test POST
         let postEvent = try TestHelpers.createAPIGatewayRequest(path: "/station", httpMethod: "POST")
-        let postResult = router.route(postEvent)
+        let postResult = router.route(postEvent, logger: logger)
 
         guard case .success(let postRoutedAction) = postResult else {
             Issue.record("Expected success for POST")
@@ -312,14 +304,14 @@ struct RouterTests {
     @Test("End-to-end: Router routes request and action handles it")
     func testEndToEndRouting() async throws {
         let logger = Logger(label: "test")
-        let stationAction = StationAction(logger: logger)
-        let router = Router(actions: [stationAction], logger: logger)
+        let stationAction = StationAction()
+        let router = Router(actions: [stationAction])
 
         // Create request
         let event = try TestHelpers.createAPIGatewayRequest(path: "/station", httpMethod: "GET")
 
         // Route request
-        let result = router.route(event)
+        let result = router.route(event, logger: logger)
 
         guard case .success(let action) = result else {
             Issue.record("Routing failed")
@@ -327,7 +319,7 @@ struct RouterTests {
         }
 
         // Handle request
-        let data = try await action.handle(event: event)
+        let data = try await action.handle(event: event, logger: logger)
 
         // Verify response
         let station = try JSONDecoder().decode(Station.self, from: data)
@@ -341,13 +333,10 @@ struct RouterTests {
 struct MockPostStationAction: Action {
     let endpoint: Maxi80Endpoint = .station
     let method: HTTPRequest.Method = .post
-    private let logger: Logger
 
-    init(logger: Logger) {
-        self.logger = logger
-    }
+    init() {}
 
-    func handle(event: APIGatewayRequest) async throws -> Data {
+    func handle(event: APIGatewayRequest, logger: Logger) async throws -> Data {
         logger.debug("Handling POST station request")
         return Data()
     }

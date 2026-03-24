@@ -16,19 +16,15 @@ public protocol HTTPClientProtocol {
         method: NIOHTTP1.HTTPMethod,
         body: Data?,
         headers: [String: String],
-        timeout: Int64
+        timeout: Int64,
+        logger: Logger
     ) async throws -> (Data, HTTPClientResponse)
 }
 
 // provide common code for all network clients
 public struct MusicAPIClient: HTTPClientProtocol {
 
-    private let logger: Logger
-    public init(logger: Logger) {
-        var logger = logger
-        logger[metadataKey: "Component"] = "MusicAPIClient"
-        self.logger = logger
-    }
+    public init() {}
 
     private let standardHeaders: [String: String] = [
         "Content-Type": "application/json",
@@ -43,8 +39,12 @@ public struct MusicAPIClient: HTTPClientProtocol {
         method: NIOHTTP1.HTTPMethod = .GET,
         body: Data? = nil,
         headers: [String: String] = [:],
-        timeout: Int64 = 10
+        timeout: Int64 = 10,
+        logger: Logger
     ) async throws -> (Data, HTTPClientResponse) {
+
+        var logger = logger
+        logger[metadataKey: "Component"] = "MusicAPIClient"
 
         // let's add provided headers to our request (keeping new value in case of conflicts)
         var requestHeaders = standardHeaders

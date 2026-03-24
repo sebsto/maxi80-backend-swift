@@ -19,20 +19,17 @@ public protocol Action {
     var method: HTTPRequest.Method { get }
 
     /// Handle the request
-    func handle(event: APIGatewayRequest) async throws -> Data
+    func handle(event: APIGatewayRequest, logger: Logger) async throws -> Data
 }
 
 /// Handles station information requests
 public struct StationAction: Action {
     public let endpoint: Maxi80Endpoint = .station
     public let method: HTTPRequest.Method = .get
-    private let logger: Logger
 
-    public init(logger: Logger) {
-        self.logger = logger
-    }
+    public init() {}
 
-    public func handle(event: APIGatewayRequest) async throws -> Data {
+    public func handle(event: APIGatewayRequest, logger: Logger) async throws -> Data {
         logger.debug("Handling station request")
         let station = Station.default
         return try encode(station)
@@ -54,23 +51,20 @@ public struct ArtworkAction: Action {
     private let bucket: String
     private let keyPrefix: String
     private let urlExpiration: TimeInterval
-    private let logger: Logger
 
     public init(
         s3Client: S3ClientProtocol,
         bucket: String,
         keyPrefix: String,
-        urlExpiration: TimeInterval,
-        logger: Logger
+        urlExpiration: TimeInterval
     ) {
         self.s3Client = s3Client
         self.bucket = bucket
         self.keyPrefix = keyPrefix
         self.urlExpiration = urlExpiration
-        self.logger = logger
     }
 
-    public func handle(event: APIGatewayRequest) async throws -> Data {
+    public func handle(event: APIGatewayRequest, logger: Logger) async throws -> Data {
         logger.debug("Handling artwork request")
 
         guard let artist = event.queryStringParameters["artist"] else {

@@ -80,17 +80,16 @@ struct IcecastMetadataCollector: LambdaHandler {
 
         // Initialize auth provider with token cache
         self.authProvider = AppleMusicAuthProvider(
-            tokenFactory: tokenFactory,
-            logger: logger
+            tokenFactory: tokenFactory
         )
 
         // Initialize HTTP client for Apple Music API
-        self.httpClient = MusicAPIClient(logger: logger)
+        self.httpClient = MusicAPIClient()
 
         // Initialize S3Writer (uses the resolved bucket region)
         let s3Config = try await S3Client.S3ClientConfig(region: bucketRegion.rawValue)
         let s3Client = S3Client(config: s3Config)
-        self.s3Writer = S3Writer(s3Client: s3Client, bucket: bucket, keyPrefix: keyPrefix, logger: logger)
+        self.s3Writer = S3Writer(s3Client: s3Client, bucket: bucket, keyPrefix: keyPrefix)
 
         // Read MAX_HISTORY_SIZE from environment
         let maxHistorySize: Int
@@ -106,13 +105,12 @@ struct IcecastMetadataCollector: LambdaHandler {
             s3Client: s3Client,
             bucket: bucket,
             keyPrefix: keyPrefix,
-            maxHistorySize: maxHistorySize,
-            logger: logger
+            maxHistorySize: maxHistorySize
         )
 
         // Initialize IcecastReader and ArtworkDownloader
-        self.icecastReader = IcecastReader(logger: logger)
-        self.artworkDownloader = ArtworkDownloader(logger: logger)
+        self.icecastReader = IcecastReader()
+        self.artworkDownloader = ArtworkDownloader()
 
         logger.info("IcecastMetadataCollector initialized successfully")
     }
@@ -123,7 +121,7 @@ struct IcecastMetadataCollector: LambdaHandler {
         // Step 1: Read Icecast stream metadata
         let rawMetadata: String
         do {
-            rawMetadata = try await icecastReader.readMetadata(from: streamURL)
+            rawMetadata = try await icecastReader.readMetadata(from: streamURL, logger: context.logger)
         } catch {
             context.logger.error("Failed to read Icecast stream: \(error)")
             throw error
@@ -154,7 +152,7 @@ struct IcecastMetadataCollector: LambdaHandler {
         let normalizedArtist = artist.lowercased().trimmingCharacters(in: .whitespaces)
         if normalizedArtist == "maxi80" || normalizedArtist == "maxi 80" {
             context.logger.info("Artist is Maxi 80, skipping Apple Music search")
-            await recordHistory(artist: artist, title: title, file: "nocover.jpg")
+            await recordHistory(artist: artist, title: title, file: "nocover.jpg", logger: context.logger)
             return
         }
 
@@ -163,7 +161,7 @@ struct IcecastMetadataCollector: LambdaHandler {
             context.logger.info("Cache hit for \(artist)/\(title), skipping")
 
             // Record history entry for cache hit
-            await recordHistory(artist: artist, title: title, file: "artwork.jpg")
+            await recordHistory(artist: artist, title: title, file: "artwork.jpg", logger: context.logger)
 
             return
         }
@@ -176,8 +174,9 @@ struct IcecastMetadataCollector: LambdaHandler {
             url: AppleMusicEndpoint.search.url(args: [searchFields, searchTerms]),
             method: .GET,
             body: nil,
-            headers: try await authProvider.authorizationHeader(),
-            timeout: 10
+            headers: try await authProvider.authorizationHeader(logger: context.logger),
+            timeout: 10,
+            logger: context.logger
         )
 
         let searchResponse = try JSONDecoder().decode(AppleMusicSearchResponse.self, from: searchData)
@@ -187,7 +186,7 @@ struct IcecastMetadataCollector: LambdaHandler {
             context.logger.warning("No search results for \(artist) - \(title), skipping")
 
             // Record history entry even when Apple Music has no results
-            await recordHistory(artist: artist, title: title, file: "nocover.jpg")
+            await recordHistory(artist: artist, title: title, file: "nocover.jpg", logger: context.logger)
 
             return
         }
@@ -196,7 +195,7 @@ struct IcecastMetadataCollector: LambdaHandler {
         // Step 6: Download artwork (if available)
         let artworkData: Data?
         if let artwork = song.attributes.artwork {
-            artworkData = try await artworkDownloader.download(artwork: artwork)
+            artworkData = try await artworkDownloader.download(artwork: artwork, logger: context.logger)
             context.logger.info("Downloaded artwork: \(artworkData!.count) bytes")
         } else {
             artworkData = nil
@@ -211,22 +210,22 @@ struct IcecastMetadataCollector: LambdaHandler {
             collectedAt: Date.now.formatted(.iso8601)
         )
 
-        try await s3Writer.writeMetadata(collectedMetadata, artist: artist, title: title)
-        try await s3Writer.writeSearchResults(searchData, artist: artist, title: title)
+        try await s3Writer.writeMetadata(collectedMetadata, artist: artist, title: title, logger: context.logger)
+        try await s3Writer.writeSearchResults(searchData, artist: artist, title: title, logger: context.logger)
         if let artworkData {
-            try await s3Writer.writeArtwork(artworkData, artist: artist, title: title)
+            try await s3Writer.writeArtwork(artworkData, artist: artist, title: title, logger: context.logger)
         }
 
         // Record history entry for cache miss
-        await recordHistory(artist: artist, title: title, file: artworkData != nil ? "artwork.jpg" : "nocover.jpg")
+        await recordHistory(artist: artist, title: title, file: artworkData != nil ? "artwork.jpg" : "nocover.jpg", logger: context.logger)
 
         context.logger.info("Successfully collected metadata for \(artist) - \(title)")
     }
 
-    private func recordHistory(artist: String, title: String, file: String) async {
+    private func recordHistory(artist: String, title: String, file: String, logger: Logger) async {
         let artworkKey = buildS3Key(prefix: s3Writer.keyPrefix, artist: artist, title: title, file: file)
         let timestamp = Date.now.formatted(.iso8601)
-        await historyManager.recordEntry(artist: artist, title: title, artworkKey: artworkKey, timestamp: timestamp)
+        await historyManager.recordEntry(artist: artist, title: title, artworkKey: artworkKey, timestamp: timestamp, logger: logger)
     }
 
     public static func main() async throws {

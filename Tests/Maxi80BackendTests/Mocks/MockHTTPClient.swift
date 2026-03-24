@@ -35,7 +35,8 @@ public actor MockHTTPClient: HTTPClientProtocol {
         method: NIOHTTP1.HTTPMethod = .GET,
         body: Data? = nil,
         headers: [String: String] = [:],
-        timeout: Int64 = 10
+        timeout: Int64 = 10,
+        logger: Logger = Logger(label: "mock")
     ) async throws -> (Data, HTTPClientResponse) {
 
         // Record the call

@@ -26,7 +26,7 @@ struct Search: AsyncParsableCommand {
         let logger = GlobalOptions.logger(verbose: globalOptions.verbose)
 
         // Initialize HTTP client
-        let httpClient = MusicAPIClient(logger: logger)
+        let httpClient = MusicAPIClient()
 
         // Get Apple Music credentials from secrets manager
         let secretsManager = try SecretsManager<AppleMusicSecret>(
@@ -61,7 +61,8 @@ struct Search: AsyncParsableCommand {
         logger.trace("Calling the Music API")
         let (data, _) = try await httpClient.apiCall(
             url: AppleMusicEndpoint.search.url(args: [searchFields, searchTerms]),
-            headers: authHeader
+            headers: authHeader,
+            logger: logger
         )
 
         // Parse the Apple Music search response

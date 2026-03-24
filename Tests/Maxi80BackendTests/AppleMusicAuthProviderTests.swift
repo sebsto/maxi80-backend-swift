@@ -1,3 +1,4 @@
+import Logging
 import Testing
 
 @testable import Maxi80Backend
@@ -35,14 +36,14 @@ struct AppleMusicAuthProviderTests {
         }
 
         let provider = AppleMusicAuthProvider(
-            tokenFactory: mockFactory,
-            logger: .init(label: "test")
+            tokenFactory: mockFactory
         )
 
         // Call authorizationHeader() multiple times
         var lastHeader: [String: String]? = nil
+        let logger = Logger(label: "test")
         for _ in 0..<testCase.callCount {
-            let header = try await provider.authorizationHeader()
+            let header = try await provider.authorizationHeader(logger: logger)
             lastHeader = header
         }
 

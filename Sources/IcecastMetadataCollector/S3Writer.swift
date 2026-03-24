@@ -16,7 +16,6 @@ struct S3Writer {
     let s3Client: S3Client
     let bucket: String
     let keyPrefix: String
-    let logger: Logger
 
     /// Checks if metadata.json already exists for this artist/title combination.
     func exists(artist: String, title: String) async throws -> Bool {
@@ -33,7 +32,7 @@ struct S3Writer {
         }
     }
 
-    func writeMetadata(_ metadata: CollectedMetadata, artist: String, title: String) async throws {
+    func writeMetadata(_ metadata: CollectedMetadata, artist: String, title: String, logger: Logger) async throws {
         let key = buildS3Key(prefix: keyPrefix, artist: artist, title: title, file: "metadata.json")
         let data: Data
         do {
@@ -41,20 +40,20 @@ struct S3Writer {
         } catch {
             throw CollectorError.s3WriteFailed(file: "metadata.json", reason: error.localizedDescription)
         }
-        try await putObject(data: data, key: key, contentType: "application/json", file: "metadata.json")
+        try await putObject(data: data, key: key, contentType: "application/json", file: "metadata.json", logger: logger)
     }
 
-    func writeSearchResults(_ data: Data, artist: String, title: String) async throws {
+    func writeSearchResults(_ data: Data, artist: String, title: String, logger: Logger) async throws {
         let key = buildS3Key(prefix: keyPrefix, artist: artist, title: title, file: "search.json")
-        try await putObject(data: data, key: key, contentType: "application/json", file: "search.json")
+        try await putObject(data: data, key: key, contentType: "application/json", file: "search.json", logger: logger)
     }
 
-    func writeArtwork(_ data: Data, artist: String, title: String) async throws {
+    func writeArtwork(_ data: Data, artist: String, title: String, logger: Logger) async throws {
         let key = buildS3Key(prefix: keyPrefix, artist: artist, title: title, file: "artwork.jpg")
-        try await putObject(data: data, key: key, contentType: "image/jpeg", file: "artwork.jpg")
+        try await putObject(data: data, key: key, contentType: "image/jpeg", file: "artwork.jpg", logger: logger)
     }
 
-    private func putObject(data: Data, key: String, contentType: String, file: String) async throws {
+    private func putObject(data: Data, key: String, contentType: String, file: String, logger: Logger) async throws {
         logger.debug("Writing \(file) to s3://\(bucket)/\(key)")
         do {
             _ = try await s3Client.putObject(input: PutObjectInput(

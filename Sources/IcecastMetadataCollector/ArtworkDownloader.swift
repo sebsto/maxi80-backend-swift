@@ -10,9 +10,8 @@ import Foundation
 #endif
 
 struct ArtworkDownloader {
-    let logger: Logger
 
-    func download(artwork: Song.Attributes.Artwork) async throws -> Data {
+    func download(artwork: Song.Attributes.Artwork, logger: Logger) async throws -> Data {
         let urlString = buildArtworkURL(
             template: artwork.url, width: artwork.width, height: artwork.height
         )

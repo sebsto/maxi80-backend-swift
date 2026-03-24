@@ -39,17 +39,15 @@ struct RouterPropertyTests {
 
     /// Creates a Router with both StationAction and ArtworkAction registered.
     private func makeRouter() -> Router {
-        let logger = Logger(label: "test")
         let mockS3 = MockS3Client()
-        let stationAction = StationAction(logger: logger)
+        let stationAction = StationAction()
         let artworkAction = ArtworkAction(
             s3Client: mockS3,
             bucket: "test-bucket",
             keyPrefix: "v2",
-            urlExpiration: 3600,
-            logger: logger
+            urlExpiration: 3600
         )
-        return Router(actions: [stationAction, artworkAction], logger: logger)
+        return Router(actions: [stationAction, artworkAction])
     }
 
     // Feature: replace-search-with-image-endpoint, Property 5: Unrecognized paths return path-not-found
@@ -57,12 +55,13 @@ struct RouterPropertyTests {
     func unrecognizedPathsReturnPathNotFound() throws {
         // Validates: Requirements 5.4
         let router = makeRouter()
+        let logger = Logger(label: "test")
         let iterations = 100
 
         for _ in 0..<iterations {
             let path = randomUnrecognizedPath()
             let event = try TestHelpers.createAPIGatewayRequest(path: path, httpMethod: "GET")
-            let result = router.route(event)
+            let result = router.route(event, logger: logger)
 
             guard case .failure(let error) = result else {
                 Issue.record("Expected pathNotFound for path '\(path)' but got success")
@@ -83,6 +82,7 @@ struct RouterPropertyTests {
     func unsupportedMethodsReturnMethodNotAllowed() throws {
         // Validates: Requirements 5.5
         let router = makeRouter()
+        let logger = Logger(label: "test")
         let knownPaths = ["/station", "/artwork"]
         let iterations = 100
 
@@ -90,7 +90,7 @@ struct RouterPropertyTests {
             let path = knownPaths.randomElement()!
             let method = randomNonGETMethod()
             let event = try TestHelpers.createAPIGatewayRequest(path: path, httpMethod: method)
-            let result = router.route(event)
+            let result = router.route(event, logger: logger)
 
             guard case .failure(let error) = result else {
                 Issue.record("Expected methodNotAllowed for \(method) \(path) but got success")

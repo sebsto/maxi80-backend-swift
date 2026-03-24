@@ -1,5 +1,4 @@
 import Foundation
-import Logging
 import NIOHTTP1
 import Testing
 
@@ -11,8 +10,7 @@ struct HTTPClientTests {
     @Test("MusicAPIClient request building")
     func testRequestBuilding() {
         // Given
-        let logger = Logger(label: "test")
-        let client = MusicAPIClient(logger: logger)
+        let client = MusicAPIClient()
         let url = URL(string: "https://api.music.apple.com/v1/test")!
         let headers = ["Authorization": "Bearer token", "Custom-Header": "value"]
         let body = "test body".data(using: .utf8)
@@ -45,8 +43,7 @@ struct HTTPClientTests {
     @Test("MusicAPIClient request building with no body")
     func testRequestBuildingNoBody() {
         // Given
-        let logger = Logger(label: "test")
-        let client = MusicAPIClient(logger: logger)
+        let client = MusicAPIClient()
         let url = URL(string: "https://api.music.apple.com/v1/test")!
 
         // When
@@ -66,8 +63,7 @@ struct HTTPClientTests {
     @Test("MusicAPIClient header merging")
     func testHeaderMerging() {
         // Given
-        let logger = Logger(label: "test")
-        let client = MusicAPIClient(logger: logger)
+        let client = MusicAPIClient()
         let url = URL(string: "https://api.music.apple.com/v1/test")!
 
         // Headers that override defaults

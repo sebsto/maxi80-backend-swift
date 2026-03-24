@@ -1,4 +1,3 @@
-import Logging
 import Testing
 
 @testable import IcecastMetadataCollector
@@ -6,7 +5,7 @@ import Testing
 @Suite("IcecastReader Tests")
 struct IcecastReaderTests {
 
-    let reader = IcecastReader(logger: Logger(label: "test"))
+    let reader = IcecastReader()
 
     // MARK: - Random URL Generator
 

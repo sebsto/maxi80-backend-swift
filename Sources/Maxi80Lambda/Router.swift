@@ -12,15 +12,13 @@ import Foundation
 /// Router handles request routing and returns the appropriate action
 public struct Router {
     private let actions: [any Action]
-    private let logger: Logger
 
-    public init(actions: [any Action], logger: Logger) {
+    public init(actions: [any Action]) {
         self.actions = actions
-        self.logger = logger
     }
 
     /// Routes an incoming API Gateway request to the appropriate action
-    public func route(_ event: APIGatewayRequest) -> Result<any Action, RouterError> {
+    public func route(_ event: APIGatewayRequest, logger: Logger) -> Result<any Action, RouterError> {
         logger.trace("Routing request - Method: \(event.httpMethod.rawValue), Path: \(event.path)")
 
         // Verify path exists
