@@ -6,8 +6,7 @@ import PackageDescription
 let package = Package(
     name: "maxi-80-backend-swift",
     platforms: [
-        .macOS(.v15),
-        .iOS(.v17),
+        .macOS(.v26),
     ],
     products: [
         .executable(name: "Maxi80Lambda", targets: ["Maxi80Lambda"]),
@@ -18,13 +17,13 @@ let package = Package(
         .executable(name: "IcecastMetadataCollector", targets: ["IcecastMetadataCollector"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/awslabs/swift-aws-lambda-runtime", from: "2.8.0"),
-        .package(url: "https://github.com/awslabs/swift-aws-lambda-events.git", from: "1.4.0"),
-        .package(url: "https://github.com/vapor/jwt-kit.git", from: "5.3.0"),
-        .package(url: "https://github.com/apple/swift-log.git", from: "1.8.0"),
-        .package(url: "https://github.com/awslabs/aws-sdk-swift.git", from: "1.6.0"),
-        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.30.0"),
-        .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.6.2"),
+        .package(url: "https://github.com/awslabs/swift-aws-lambda-runtime", from: "2.10.0"),
+        .package(url: "https://github.com/awslabs/swift-aws-lambda-events.git", from: "1.5.0"),
+        .package(url: "https://github.com/vapor/jwt-kit.git", from: "5.5.0"),
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.13.0"),
+        .package(url: "https://github.com/awslabs/aws-sdk-swift.git", from: "1.7.0"),
+        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.34.0"),
+        .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.8.0"),
     ],
     targets: [
         .executableTarget(
