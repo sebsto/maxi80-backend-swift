@@ -88,28 +88,27 @@ Increasing the schedule from `rate(2 minutes)` to `rate(5 minutes)` would reduce
 - **Savings:** ~$0.11/month on S3 PUTs
 - **Lambda:** Already at $0.00 (free tier), so no Lambda savings
 
-### 5. Lambda Costs — Already $0.00 (No Action Needed)
+### 5. Lambda Costs — Already $0.00 (Optimized)
 
-Both Lambda functions are fully covered by the free tier (1M requests + 400,000 GB-seconds/month). Your usage is well within these limits. Memory reduction or schedule changes won't save money here.
+Both Lambda functions are fully covered by the free tier (1M requests + 400,000 GB-seconds/month). Memory has been **reduced from 256 MB to 128 MB** (June 7, 2026) based on actual usage analysis:
+
+| Lambda | Peak Memory Used | Configured Memory | Utilization |
+|--------|-----------------|-------------------|-------------|
+| IcecastMetadataCollector | 92 MB | 128 MB | 72% |
+| Maxi80Lambda | 84 MB | 128 MB | 66% |
+
+This halves the GB-seconds consumed per invocation. While still within free tier, the reduction provides more free-tier headroom and would matter if usage ever exceeded the free tier threshold (saved compute would be ~50% less per invocation at $0.0000166667/GB-second).
 
 ### 6. CloudWatch — $0.13/month (Low Priority)
 
-Current cost is minimal. Adding log retention would prevent future growth:
+Current cost is minimal. Log retention has been set to **30 days** on all Lambda log groups (applied June 7, 2026 via `put-retention-policy`). This prevents unbounded log growth and the associated storage costs.
 
-```yaml
-# Add to template.yaml per function
-Maxi80LambdaLogGroup:
-  Type: AWS::Logs::LogGroup
-  Properties:
-    LogGroupName: !Sub "/aws/lambda/${Maxi80Lambda}"
-    RetentionInDays: 14
+Log groups with 30-day retention:
+- `/aws/lambda/Maxi80Backend-2025-Maxi80Lambda-xLZTcX6Y3GUM`
+- `/aws/lambda/Maxi80Backend-2025-IcecastMetadataCollector-GtapVCrulilc`
+- `/aws/lambda/Maxi80Backend-2025-IcecastMetadataCollector-N9c051h1k27A` (old)
 
-IcecastCollectorLogGroup:
-  Type: AWS::Logs::LogGroup
-  Properties:
-    LogGroupName: !Sub "/aws/lambda/${IcecastMetadataCollector}"
-    RetentionInDays: 14
-```
+**Estimated savings:** CloudWatch Logs ingestion is $0.57/GB. The collector Lambda logs ~0.5 KB per invocation × 14,400 invocations/month ≈ 7 MB/month ingestion (negligible). The real savings come from **not accumulating storage indefinitely** — CloudWatch Logs storage is $0.03/GB/month. Without retention, after 12 months of operation at ~7 MB/month you'd accumulate ~84 MB (still negligible at $0.003/month). But the retention policy is good hygiene that prevents surprises if logging volume increases.
 
 ### 7. AWS AppSync — $0.23/month
 
@@ -126,15 +125,17 @@ aws cloudtrail describe-trails --profile maxi80 --region eu-west-1
 
 ## Summary: What Would Be Most Effective
 
-| Action | Monthly Savings | Effort |
-|--------|----------------|--------|
-| Investigate & eliminate 409 GB S3-IA | **Up to $5.11** | Medium (investigation needed) |
-| Delete unused AppSync API | $0.23 | Trivial |
-| Review CloudTrail trails | $0.18 | Low |
-| Increase collector interval to 5 min | $0.11 | Trivial (1 line change) |
-| Add log retention policies | Prevents future growth | Trivial |
-| Delete v1/ prefix | $0.009 | Low |
-| **Total possible savings** | **~$5.64/month (78% of bill)** | |
+| Action | Monthly Savings | Effort | Status |
+|--------|----------------|--------|--------|
+| Investigate & eliminate 409 GB S3-IA | **Up to $5.11** | Medium (investigation needed) | ⏳ TODO |
+| Migrate Secrets Manager → SSM Parameter Store | $0.47 | Low | ✅ Done |
+| Reduce Lambda memory 256→128 MB | Free tier headroom (50% less GB-s) | Trivial | ✅ Done |
+| Set CloudWatch log retention to 30 days | Prevents future growth | Trivial | ✅ Done |
+| Delete unused AppSync API | $0.23 | Trivial | ⏳ TODO |
+| Review CloudTrail trails | $0.18 | Low | ⏳ TODO |
+| Increase collector interval to 5 min | $0.11 | Trivial (1 line change) | ⏳ TODO |
+| Delete v1/ prefix | $0.009 | Low | ⏳ TODO |
+| **Total possible savings** | **~$6.11/month (85% of bill)** | | |
 
 ## Conclusion
 

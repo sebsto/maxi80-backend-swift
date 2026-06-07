@@ -28,7 +28,7 @@ Resources:
                S3_BUCKET: !Ref MetadataBucket
                KEY_PREFIX: v2
                URL_EXPIRATION: "3600"
-         MemorySize: 256
+         MemorySize: 128
          CodeUri: .build/plugins/AWSLambdaPackager/outputs/AWSLambdaPackager/Maxi80Lambda/Maxi80Lambda.zip
          Policies:
             - Statement:
@@ -55,7 +55,7 @@ Resources:
       Type: AWS::Serverless::Function
       Properties:
          CodeUri: .build/plugins/AWSLambdaPackager/outputs/AWSLambdaPackager/IcecastMetadataCollector/IcecastMetadataCollector.zip
-         MemorySize: 256
+         MemorySize: 128
          Timeout: 115
          Environment:
             Variables:
