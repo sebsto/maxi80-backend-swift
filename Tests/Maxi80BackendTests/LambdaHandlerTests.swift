@@ -77,14 +77,14 @@ struct LambdaHandlerTests {
     func testHTTPMethodValidation() async throws {
         // Test GET method
         let getEvent = try TestHelpers.createAPIGatewayRequest(path: "/station", httpMethod: "GET")
-        #expect(getEvent.httpMethod == .get)
+        #expect(getEvent.context.http.method == .get)
 
         // Test POST method
         let postEvent = try TestHelpers.createAPIGatewayRequest(path: "/station", httpMethod: "POST")
-        #expect(postEvent.httpMethod == .post)
+        #expect(postEvent.context.http.method == .post)
 
         // Test other methods
         let putEvent = try TestHelpers.createAPIGatewayRequest(path: "/station", httpMethod: "PUT")
-        #expect(putEvent.httpMethod == .put)
+        #expect(putEvent.context.http.method == .put)
     }
 }

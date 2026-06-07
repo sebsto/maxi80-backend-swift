@@ -66,8 +66,8 @@ struct Maxi80Lambda: LambdaHandler {
         self.router = Router(actions: actions)
     }
 
-    // the return value must be either APIGatewayResponse or any Encodable struct
-    func handle(_ event: APIGatewayRequest, context: LambdaContext) async throws -> APIGatewayResponse {
+    // the return value must be either APIGatewayV2Response or any Encodable struct
+    func handle(_ event: APIGatewayV2Request, context: LambdaContext) async throws -> APIGatewayV2Response {
         var header = HTTPHeaders()
         header["content-type"] = "application/json"
 
@@ -77,14 +77,14 @@ struct Maxi80Lambda: LambdaHandler {
             // Route the request to get the action
             let action = try router.route(event, logger: context.logger).get()
             context.logger.trace("Action identified: \(action)")
-            
+
             // Execute the action
             let responseData = try await action.handle(event: event, logger: context.logger)
 
             if responseData.isEmpty {
-                return APIGatewayResponse(statusCode: .noContent)
+                return APIGatewayV2Response(statusCode: .noContent)
             } else {
-                return APIGatewayResponse(
+                return APIGatewayV2Response(
                     statusCode: .ok,
                     headers: header,
                     body: String(data: responseData, encoding: .utf8)
@@ -92,20 +92,20 @@ struct Maxi80Lambda: LambdaHandler {
             }
 
         } catch let error as RouterError {
-            return APIGatewayResponse(
+            return APIGatewayV2Response(
                 statusCode: error.statusCode,
                 headers: header,
                 body: error.description
             )
         } catch let error as ActionError {
-            return APIGatewayResponse(
+            return APIGatewayV2Response(
                 statusCode: .badRequest,
                 headers: header,
                 body: error.description
             )
         } catch {
             header["content-type"] = "text/plain"
-            return APIGatewayResponse(
+            return APIGatewayV2Response(
                 statusCode: .internalServerError,
                 headers: header,
                 body: "\(error.localizedDescription)"

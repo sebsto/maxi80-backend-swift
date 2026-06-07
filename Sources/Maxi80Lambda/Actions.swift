@@ -18,7 +18,7 @@ public protocol Action {
     var method: HTTPRequest.Method { get }
 
     /// Handle the request
-    func handle(event: APIGatewayRequest, logger: Logger) async throws -> Data
+    func handle(event: APIGatewayV2Request, logger: Logger) async throws -> Data
 }
 
 /// Handles station information requests
@@ -28,7 +28,7 @@ public struct StationAction: Action {
 
     public init() {}
 
-    public func handle(event: APIGatewayRequest, logger: Logger) async throws -> Data {
+    public func handle(event: APIGatewayV2Request, logger: Logger) async throws -> Data {
         logger.debug("Handling station request")
         let station = Station.default
         return try encode(station)
@@ -63,7 +63,7 @@ public struct ArtworkAction: Action {
         self.urlExpiration = urlExpiration
     }
 
-    public func handle(event: APIGatewayRequest, logger: Logger) async throws -> Data {
+    public func handle(event: APIGatewayV2Request, logger: Logger) async throws -> Data {
         logger.debug("Handling artwork request")
 
         guard let artist = event.queryStringParameters["artist"] else {
@@ -124,7 +124,7 @@ public struct HistoryAction: Action {
         self.keyPrefix = keyPrefix
     }
 
-    public func handle(event: APIGatewayRequest, logger: Logger) async throws -> Data {
+    public func handle(event: APIGatewayV2Request, logger: Logger) async throws -> Data {
         logger.debug("Handling history request")
 
         let key = "\(keyPrefix)/history.json"

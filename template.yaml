@@ -19,6 +19,54 @@ Parameters:
       Description: Name of the S3 bucket used to store collected Icecast metadata and history
 
 Resources:
+
+   # HTTP API with Lambda Authorizer
+   Maxi80HttpApi:
+      Type: AWS::Serverless::HttpApi
+      Properties:
+         StageName: $default
+         Auth:
+            DefaultAuthorizer: ApiKeyAuthorizer
+            Authorizers:
+               ApiKeyAuthorizer:
+                  FunctionArn: !GetAtt AuthorizerLambda.Arn
+                  Identity:
+                     Headers:
+                        - Authorization
+                  AuthorizerPayloadFormatVersion: "2.0"
+                  EnableSimpleResponses: true
+
+   # Give the HTTP API permission to invoke the authorizer
+   AuthorizerPermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+         Action: lambda:InvokeFunction
+         FunctionName: !Ref AuthorizerLambda
+         Principal: apigateway.amazonaws.com
+         SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${Maxi80HttpApi}/*"
+
+   # Lambda authorizer function
+   AuthorizerLambda:
+      Type: AWS::Serverless::Function
+      Properties:
+         CodeUri: .build/plugins/AWSLambdaPackager/outputs/AWSLambdaPackager/AuthorizerLambda/AuthorizerLambda.zip
+         MemorySize: 128
+         Timeout: 29
+         Environment:
+            Variables:
+               API_KEY_PARAMETER: /maxi80/api-key
+         Policies:
+            - Statement:
+                - Effect: Allow
+                  Action:
+                    - ssm:GetParameter
+                  Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/maxi80/api-key"
+                - Effect: Allow
+                  Action:
+                    - kms:Decrypt
+                  Resource: !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:alias/aws/ssm"
+
+   # Lambda business function
    Maxi80Lambda:
       Description: Maxi80 iOS app backend API
       Type: AWS::Serverless::Function
@@ -42,13 +90,12 @@ Resources:
                     - s3:GetBucketLocation
                   Resource: !Sub "arn:aws:s3:::${MetadataBucket}"
          Events:
-            ApiEvent:
-               Type: Api
+            HttpApiEvent:
+               Type: HttpApi
                Properties:
+                  ApiId: !Ref Maxi80HttpApi
                   Path: /{proxy+}
                   Method: ANY
-                  Auth:
-                     ApiKeyRequired: true
 
    IcecastMetadataCollector:
       Description: Collects Icecast stream metadata and stores in S3
@@ -93,86 +140,12 @@ Resources:
       Metadata:
          BuildMethod: makefile
 
-   # API Key for client authentication
-   Maxi80ApiKey:
-      Type: AWS::ApiGateway::ApiKey
-      Properties:
-         Name: Maxi80ApiKey
-         Description: API Key for Maxi80 Mobile app
-         Enabled: true
-
-   # Usage Plan with throttling
-   Maxi80UsagePlan:
-      Type: AWS::ApiGateway::UsagePlan
-      Properties:
-         UsagePlanName: Maxi80UsagePlan
-         Description: Usage plan for Maxi80 API
-         Throttle:
-            BurstLimit: 50
-            RateLimit: 10
-         Quota:
-            Limit: 10000       # 10,000 requests per day
-            Period: DAY
-         ApiStages:
-            - ApiId: !Ref ServerlessRestApi
-              Stage: !Ref ServerlessRestApiProdStage
-
-   # Link API Key to Usage Plan
-   Maxi80UsagePlanKey:
-      Type: AWS::ApiGateway::UsagePlanKey
-      Properties:
-         KeyId: !Ref Maxi80ApiKey
-         KeyType: API_KEY
-         UsagePlanId: !Ref Maxi80UsagePlan
-
    # SNS Topic for alerts
    Maxi80AlertsTopic:
       Type: AWS::SNS::Topic
       Properties:
          TopicName: Maxi80-API-Alerts
          DisplayName: Maxi80 API Monitoring Alerts
-
-   # CloudWatch Alarm for API Gateway 4XX errors (throttling returns 429)
-   ApiGateway4XXAlarm:
-      Type: AWS::CloudWatch::Alarm
-      Properties:
-         AlarmName: Maxi80-API-4XX-Errors
-         AlarmDescription: Alert when API Gateway returns 4XX errors (including throttling)
-         MetricName: 4XXError
-         Namespace: AWS/ApiGateway
-         Statistic: Sum
-         Period: 300  # 5 minutes
-         EvaluationPeriods: 2
-         Threshold: 10
-         ComparisonOperator: GreaterThanThreshold
-         Dimensions:
-            - Name: ApiName
-              Value: !Ref ServerlessRestApi
-            - Name: Stage
-              Value: Prod
-         AlarmActions:
-            - !Ref Maxi80AlertsTopic
-
-   # CloudWatch Alarm for high request count (approaching quota)
-   ApiGatewayHighRequestCountAlarm:
-      Type: AWS::CloudWatch::Alarm
-      Properties:
-         AlarmName: Maxi80-API-High-Request-Count
-         AlarmDescription: Alert when API request count is high (80% of daily quota)
-         MetricName: Count
-         Namespace: AWS/ApiGateway
-         Statistic: Sum
-         Period: 3600  # 1 hour
-         EvaluationPeriods: 1
-         Threshold: 8000  # 80% of 10,000 daily quota
-         ComparisonOperator: GreaterThanThreshold
-         Dimensions:
-            - Name: ApiName
-              Value: !Ref ServerlessRestApi
-            - Name: Stage
-              Value: Prod
-         AlarmActions:
-            - !Ref Maxi80AlertsTopic
 
    # CloudWatch Alarm for Lambda errors
    LambdaErrorAlarm:
@@ -183,7 +156,7 @@ Resources:
          MetricName: Errors
          Namespace: AWS/Lambda
          Statistic: Sum
-         Period: 300  # 5 minutes
+         Period: 300
          EvaluationPeriods: 1
          Threshold: 1
          ComparisonOperator: GreaterThanOrEqualToThreshold
@@ -202,9 +175,9 @@ Resources:
          MetricName: Duration
          Namespace: AWS/Lambda
          Statistic: Average
-         Period: 300  # 5 minutes
+         Period: 300
          EvaluationPeriods: 2
-         Threshold: 25000  # 25 seconds (assuming 30s timeout)
+         Threshold: 25000
          ComparisonOperator: GreaterThanThreshold
          Dimensions:
             - Name: FunctionName
@@ -212,19 +185,29 @@ Resources:
          AlarmActions:
             - !Ref Maxi80AlertsTopic
 
+   # CloudWatch Alarm for high request count on HTTP API
+   HttpApiHighRequestCountAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+         AlarmName: Maxi80-HttpApi-High-Request-Count
+         AlarmDescription: Alert when HTTP API request count is high
+         MetricName: Count
+         Namespace: AWS/ApiGateway
+         Statistic: Sum
+         Period: 3600
+         EvaluationPeriods: 1
+         Threshold: 8000
+         ComparisonOperator: GreaterThanThreshold
+         Dimensions:
+            - Name: ApiId
+              Value: !Ref Maxi80HttpApi
+         AlarmActions:
+            - !Ref Maxi80AlertsTopic
+
 Outputs:
    ApiUrl:
-      Description: API Gateway endpoint URL
-      Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
-   ApiKey:
-      Description: API Key for authentication
-      Value: !Ref Maxi80ApiKey
+      Description: HTTP API endpoint URL
+      Value: !Sub "https://${Maxi80HttpApi}.execute-api.${AWS::Region}.amazonaws.com/"
    AlertsTopicArn:
       Description: SNS Topic ARN for monitoring alerts
       Value: !Ref Maxi80AlertsTopic
-
-# After initial deployment 
-# aws sns subscribe \
-#   --topic-arn <AlertsTopicArn-from-output> \
-#   --protocol email \
-#   --notification-endpoint your-email@example.com

@@ -128,6 +128,7 @@ aws cloudtrail describe-trails --profile maxi80 --region eu-west-1
 | Action | Monthly Savings | Effort | Status |
 |--------|----------------|--------|--------|
 | Investigate & eliminate 409 GB S3-IA | **Up to $5.11** | Medium (investigation needed) | ⏳ TODO |
+| Migrate REST API → HTTP API + Lambda Authorizer | 71% cheaper per request ($1/M vs $3.50/M) | Medium | ✅ Done |
 | Migrate Secrets Manager → SSM Parameter Store | $0.47 | Low | ✅ Done |
 | Reduce Lambda memory 256→128 MB | Free tier headroom (50% less GB-s) | Trivial | ✅ Done |
 | Set CloudWatch log retention to 30 days | Prevents future growth | Trivial | ✅ Done |
@@ -142,6 +143,95 @@ aws cloudtrail describe-trails --profile maxi80 --region eu-west-1
 Your Lambda, API Gateway, and compute costs are essentially **zero** thanks to free tier and ARM64/Graviton. The bill is dominated by a **mysterious 409 GB S3 Standard-IA storage charge** that doesn't match any visible objects. Investigating and resolving that single issue would eliminate ~73% of your total AWS spend for this account.
 
 The application architecture itself is already very cost-efficient — serverless, ARM64, minimal memory, API key throttling. The main opportunity is storage housekeeping, not architectural changes.
+
+---
+
+## Proposed Improvement: Swap REST API for HTTP API + Lambda Authorizer
+
+### Current Architecture (REST API + API Key)
+
+```
+Client → REST API Gateway (API Key auth) → Maxi80Lambda
+```
+
+- REST API pricing: **$3.50 per million requests** (eu-central-1)
+- API Key validation is handled natively by API Gateway (no extra Lambda call)
+- Usage plan enforces throttling (10 req/s burst 50) and quota (10K/day)
+
+### Proposed Architecture (HTTP API + Lambda Authorizer)
+
+```
+Client → HTTP API Gateway → Lambda Authorizer (validates API key) → Maxi80Lambda
+```
+
+- HTTP API pricing: **$1.00 per million requests** (eu-central-1)
+- Each request triggers **two Lambda invocations**: one for the authorizer, one for the business logic
+- HTTP API supports Lambda authorizers with caching (configurable TTL)
+
+### Cost Comparison
+
+Current observed traffic: **~6 requests over 37 days** (~5 requests/month). This is extremely low, so both options cost effectively $0 with free tier. Let's model for realistic growth scenarios:
+
+| Monthly Requests | REST API Cost | HTTP API Cost | Extra Lambda (authorizer) | HTTP API Total | Savings |
+|-----------------|--------------|--------------|--------------------------|----------------|---------|
+| 5,000 | $0.018 | $0.005 | $0.00 (free tier) | $0.005 | $0.013 |
+| 100,000 | $0.35 | $0.10 | $0.00 (free tier) | $0.10 | $0.25 |
+| 1,000,000 | $3.50 | $1.00 | $0.00 (free tier) | $1.00 | $2.50 |
+| 10,000,000 | $35.00 | $10.00 | ~$2.10* | $12.10 | $22.90 |
+
+*Lambda authorizer cost at 10M requests: 10M invocations × 128 MB × ~50ms avg = 6,250 GB-seconds ≈ $2.10 (beyond free tier of 400K GB-s). With authorizer caching enabled (e.g., 300s TTL), actual invocations drop dramatically.
+
+### Key Considerations
+
+**Pros of HTTP API + Lambda Authorizer:**
+- **71% cheaper per request** ($1.00 vs $3.50 per million)
+- **Lower latency** (~60% less API Gateway overhead per AWS docs)
+- More flexible auth logic (can validate tokens, check IP, etc.)
+- Authorizer results can be **cached** (5 min default, up to 1 hour) — reducing actual authorizer invocations to near zero for repeat clients
+
+**Cons:**
+- Two Lambda cold starts on first request (authorizer + business logic)
+- No native usage plans/quotas (would need custom throttling logic in the authorizer or use WAF)
+- Slightly more complex deployment (extra Lambda to build/deploy)
+- If you want quota enforcement (10K/day limit), you'd need to implement it yourself or accept just rate limiting
+
+**For your current traffic (~5 req/month):** The savings are negligible ($0.013/month). The migration makes sense only if:
+1. You expect significant traffic growth (iOS app launch)
+2. You value the lower latency
+3. You're okay losing the built-in usage plan quotas
+
+### Authorizer Caching Impact
+
+With a 5-minute cache TTL (default for HTTP API authorizers), a single client making multiple requests would only trigger the authorizer once per 5 minutes. At your current usage, the authorizer would fire ~1 time per session, not per request. This makes the extra Lambda cost essentially zero.
+
+### Recommendation
+
+~~At current traffic levels, this migration saves **~$0.01/month** — not worth the complexity.~~ **Migration completed on June 7, 2026.** The REST API with API Key has been replaced by an HTTP API with a Lambda authorizer that reads the API key from SSM Parameter Store (`/maxi80/api-key`).
+
+**New API endpoint:** `https://m0fjchl4pk.execute-api.eu-central-1.amazonaws.com/`
+
+**Auth change for clients:** Replace `x-api-key` header with `Authorization` header containing the same key value.
+
+**What was removed:**
+- REST API Gateway (and its $3.50/M pricing)
+- API Key resource
+- Usage Plan + Usage Plan Key
+
+**What was added:**
+- HTTP API Gateway ($1.00/M pricing — 71% cheaper)
+- AuthorizerLambda (128 MB, reads API key from SSM at cold start)
+- CloudWatch alarm for high request count on the HTTP API
+
+**Actual cost impact at current traffic (~5 req/month):** ~$0, but correctly positioned for growth.
+
+### Implementation Reference
+
+The `swift-aws-lambda-runtime` repo includes a working example at:
+`Examples/APIGatewayV2+LambdaAuthorizer/`
+
+Key pattern: use `APIGatewayLambdaAuthorizerSimpleResponse` (returns `isAuthorized: true/false`) with `EnableSimpleResponses: true` and `AuthorizerPayloadFormatVersion: "2.0"` in the SAM template.
+
+The authorizer Lambda would read the expected API key from SSM Parameter Store (same pattern as the Apple Music secret) and compare against the `Authorization` header.
 
 ---
 

@@ -336,7 +336,7 @@ struct MockPostStationAction: Action {
 
     init() {}
 
-    func handle(event: APIGatewayRequest, logger: Logger) async throws -> Data {
+    func handle(event: APIGatewayV2Request, logger: Logger) async throws -> Data {
         logger.debug("Handling POST station request")
         return Data()
     }

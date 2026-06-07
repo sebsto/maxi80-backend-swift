@@ -17,18 +17,21 @@ public struct Router {
         self.actions = actions
     }
 
-    /// Routes an incoming API Gateway request to the appropriate action
-    public func route(_ event: APIGatewayRequest, logger: Logger) -> Result<any Action, RouterError> {
-        logger.trace("Routing request - Method: \(event.httpMethod.rawValue), Path: \(event.path)")
+    /// Routes an incoming HTTP API Gateway V2 request to the appropriate action
+    public func route(_ event: APIGatewayV2Request, logger: Logger) -> Result<any Action, RouterError> {
+        let method = event.context.http.method
+        let path = event.rawPath
+
+        logger.trace("Routing request - Method: \(method.rawValue), Path: \(path)")
 
         // Verify path exists
-        guard let endpoint = Maxi80Endpoint.from(path: event.path) else {
-            return .failure(.pathNotFound(path: event.path))
+        guard let endpoint = Maxi80Endpoint.from(path: path) else {
+            return .failure(.pathNotFound(path: path))
         }
 
         // Find action matching both endpoint and method
-        guard let action = actions.first(where: { $0.endpoint == endpoint && $0.method == event.httpMethod }) else {
-            return .failure(.methodNotAllowed(path: event.path, method: event.httpMethod.rawValue))
+        guard let action = actions.first(where: { $0.endpoint == endpoint && $0.method == method }) else {
+            return .failure(.methodNotAllowed(path: path, method: method.rawValue))
         }
 
         return .success(action)

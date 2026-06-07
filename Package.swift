@@ -10,6 +10,7 @@ let package = Package(
     ],
     products: [
         .executable(name: "Maxi80Lambda", targets: ["Maxi80Lambda"]),
+        .executable(name: "AuthorizerLambda", targets: ["AuthorizerLambda"]),
         .library(name: "Maxi80Backend", targets: ["Maxi80Backend"]),
         .executable(name: "Maxi80CLI", targets: ["Maxi80CLI"]),
         .executable(name: "ParseMetadata", targets: ["ParseMetadata"]),
@@ -81,6 +82,19 @@ let package = Package(
                     condition: .when(platforms: [.linux, .macOS])
                 ),
                 .product(name: "AWSS3", package: "aws-sdk-swift"),
+                .target(name: "Maxi80Backend"),
+            ]
+        ),
+        .executableTarget(
+            name: "AuthorizerLambda",
+            dependencies: [
+                .product(name: "AWSLambdaRuntime", package: "swift-aws-lambda-runtime"),
+                .product(name: "AWSLambdaEvents", package: "swift-aws-lambda-events"),
+                .product(
+                    name: "Logging",
+                    package: "swift-log",
+                    condition: .when(platforms: [.linux, .macOS])
+                ),
                 .target(name: "Maxi80Backend"),
             ]
         ),
