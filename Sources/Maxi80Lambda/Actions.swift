@@ -74,9 +74,20 @@ public struct ArtworkAction: Action {
         }
 
         let key = "\(keyPrefix)/\(artist)/\(title)/artwork.jpg"
+        logger.debug("Looking up artwork key: \(key) in bucket: \(bucket)")
 
-        let exists = try await s3Client.objectExists(bucket: bucket, key: key)
+        let exists: Bool
+        do {
+            exists = try await s3Client.objectExists(bucket: bucket, key: key)
+        } catch {
+            let errorType = String(describing: type(of: error))
+            let errorDesc = String(describing: error)
+            logger.debug("objectExists failed — type: \(errorType), description: \(errorDesc)")
+            throw error
+        }
+
         guard exists else {
+            logger.debug("Artwork not found, returning empty response")
             return Data()
         }
 

@@ -4,13 +4,13 @@ Description: Maxi80 iOS app backend service
 
 Globals:
    Function:
-      Runtime: provided.al2
+      Runtime: provided.al2023
       Architectures:
          - arm64
       Handler: bootstrap
       LoggingConfig:
          LogFormat: JSON
-         ApplicationLogLevel: INFO
+         ApplicationLogLevel: DEBUG
          SystemLogLevel: INFO
 
 Parameters:
@@ -88,6 +88,7 @@ Resources:
                 - Effect: Allow
                   Action:
                     - s3:GetBucketLocation
+                    - s3:ListBucket
                   Resource: !Sub "arn:aws:s3:::${MetadataBucket}"
          Events:
             HttpApiEvent:

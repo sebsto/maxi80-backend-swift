@@ -45,7 +45,7 @@ public struct S3Manager: S3ManagerProtocol, Sendable {
         } catch is AWSS3.NotFound {
             return false
         }
-        // Other errors propagate as-is
+        // Other errors propagate — caller logs the details
     }
 
     public func presignedGetURL(bucket: String, key: String, expiration: TimeInterval) async throws -> URL {
@@ -89,9 +89,13 @@ public enum S3ManagerError: Error {
 
 /// Resolves the actual AWS region of an S3 bucket by calling GetBucketLocation.
 /// Falls back to `fallback` if the lookup fails.
+///
+/// Note: GetBucketLocation must be called against us-east-1 (the S3 global endpoint)
+/// to reliably work for buckets in any region.
+///
 /// - Parameters:
 ///   - bucket: The S3 bucket name.
-///   - configuredRegion: The region to use for the initial GetBucketLocation call.
+///   - configuredRegion: The region to use as fallback if the lookup fails.
 ///   - fallback: The region to return if the lookup fails. Defaults to `configuredRegion`.
 /// - Returns: The resolved bucket region.
 public func resolveBucketRegion(
@@ -100,7 +104,8 @@ public func resolveBucketRegion(
     fallback: Region? = nil
 ) async -> Region {
     do {
-        let tempConfig = try await S3Client.S3ClientConfig(region: configuredRegion.rawValue)
+        // GetBucketLocation must be called from us-east-1 to work for any bucket
+        let tempConfig = try S3Client.S3ClientConfig(region: "us-east-1")
         let tempS3 = S3Client(config: tempConfig)
         let locationOutput = try await tempS3.getBucketLocation(
             input: GetBucketLocationInput(bucket: bucket)
@@ -109,6 +114,7 @@ public func resolveBucketRegion(
            !locationConstraint.isEmpty {
             return Region(rawValue: locationConstraint)
         } else {
+            // Buckets in us-east-1 return nil/empty LocationConstraint
             return .useast1
         }
     } catch {

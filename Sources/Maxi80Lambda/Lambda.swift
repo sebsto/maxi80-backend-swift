@@ -39,7 +39,7 @@ struct Maxi80Lambda: LambdaHandler {
         } else {
             // Resolve actual bucket region (may differ from Lambda's region)
             let bucketRegion = await resolveBucketRegion(bucket: bucket, configuredRegion: region)
-            logger.trace("Bucket \(bucket) region: \(bucketRegion)")
+            logger.debug("Bucket \(bucket) resolved to region: \(bucketRegion)")
 
             let s3Config = try await S3Client.S3ClientConfig(region: bucketRegion.rawValue)
             let s3 = S3Client(config: s3Config)
