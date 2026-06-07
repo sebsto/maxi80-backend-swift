@@ -84,3 +84,34 @@ public struct S3Manager: S3ManagerProtocol, Sendable {
 public enum S3ManagerError: Error {
     case presignFailed(key: String)
 }
+
+// MARK: - Bucket Region Resolution
+
+/// Resolves the actual AWS region of an S3 bucket by calling GetBucketLocation.
+/// Falls back to `fallback` if the lookup fails.
+/// - Parameters:
+///   - bucket: The S3 bucket name.
+///   - configuredRegion: The region to use for the initial GetBucketLocation call.
+///   - fallback: The region to return if the lookup fails. Defaults to `configuredRegion`.
+/// - Returns: The resolved bucket region.
+public func resolveBucketRegion(
+    bucket: String,
+    configuredRegion: Region,
+    fallback: Region? = nil
+) async -> Region {
+    do {
+        let tempConfig = try await S3Client.S3ClientConfig(region: configuredRegion.rawValue)
+        let tempS3 = S3Client(config: tempConfig)
+        let locationOutput = try await tempS3.getBucketLocation(
+            input: GetBucketLocationInput(bucket: bucket)
+        )
+        if let locationConstraint = locationOutput.locationConstraint?.rawValue,
+           !locationConstraint.isEmpty {
+            return Region(rawValue: locationConstraint)
+        } else {
+            return .useast1
+        }
+    } catch {
+        return fallback ?? configuredRegion
+    }
+}

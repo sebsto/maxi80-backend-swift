@@ -33,6 +33,13 @@ call-artwork:
   -H "x-api-key: $(API_KEY)" \
   -H "Accept: application/json"
 
+call-history:
+	$(eval API_KEY := $(shell aws apigateway get-api-key --api-key $(API_KEY_ID) --include-value --region $(AWS_REGION) --profile $(AWS_PROFILE) --query "value" --output text))
+	@curl -X GET \
+  "$(API_GATEWAY_URL)/history" \
+  -H "x-api-key: $(API_KEY)" \
+  -H "Accept: application/json"
+
 # Helper target to get just the API key
 get-api-key:
 	@aws apigateway get-api-key --api-key $(API_KEY_ID) --include-value --region $(AWS_REGION) --profile $(AWS_PROFILE) --query "value" --output text

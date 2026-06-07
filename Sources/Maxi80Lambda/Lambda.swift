@@ -37,8 +37,13 @@ struct Maxi80Lambda: LambdaHandler {
         if let provided = s3Client {
             resolvedS3Client = provided
         } else {
-            let s3 = try S3Client(region: region.rawValue)
-            resolvedS3Client = S3Manager(s3Client: s3, region: region)
+            // Resolve actual bucket region (may differ from Lambda's region)
+            let bucketRegion = await resolveBucketRegion(bucket: bucket, configuredRegion: region)
+            logger.trace("Bucket \(bucket) region: \(bucketRegion)")
+
+            let s3Config = try await S3Client.S3ClientConfig(region: bucketRegion.rawValue)
+            let s3 = S3Client(config: s3Config)
+            resolvedS3Client = S3Manager(s3Client: s3, region: bucketRegion)
         }
 
         // Initialize actions array
@@ -49,6 +54,11 @@ struct Maxi80Lambda: LambdaHandler {
                 bucket: bucket,
                 keyPrefix: keyPrefix,
                 urlExpiration: urlExpiration
+            ),
+            HistoryAction(
+                s3Client: resolvedS3Client,
+                bucket: bucket,
+                keyPrefix: keyPrefix
             ),
         ]
 

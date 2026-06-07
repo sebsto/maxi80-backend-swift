@@ -103,6 +103,39 @@ public enum ActionError: Error, CustomStringConvertible {
 
 
 
+// MARK: - History Action
+
+/// Handles history requests by reading history.json from S3 and returning it directly.
+public struct HistoryAction: Action {
+    public let endpoint: Maxi80Endpoint = .history
+    public let method: HTTPRequest.Method = .get
+
+    private let s3Client: S3ManagerProtocol
+    private let bucket: String
+    private let keyPrefix: String
+
+    public init(
+        s3Client: S3ManagerProtocol,
+        bucket: String,
+        keyPrefix: String
+    ) {
+        self.s3Client = s3Client
+        self.bucket = bucket
+        self.keyPrefix = keyPrefix
+    }
+
+    public func handle(event: APIGatewayRequest, logger: Logger) async throws -> Data {
+        logger.debug("Handling history request")
+
+        let key = "\(keyPrefix)/history.json"
+        guard let data = try await s3Client.getObject(bucket: bucket, key: key) else {
+            // No history file yet — return an empty entries array
+            return Data("{\"entries\":[]}".utf8)
+        }
+        return data
+    }
+}
+
 // MARK: - Artwork Response
 
 /// JSON response model for the artwork endpoint.

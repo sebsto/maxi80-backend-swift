@@ -20,14 +20,14 @@ Parameters:
 
 Resources:
    Maxi80Lambda:
-      Description: This function provides the backend to the Maxi80 iOS app
+      Description: Maxi80 iOS app backend API
       Type: AWS::Serverless::Function
       Properties:
          Environment:
             Variables:
                S3_BUCKET: !Ref MetadataBucket
                KEY_PREFIX: v2
-               URL_EXPIRATION: 3600
+               URL_EXPIRATION: "3600"
          MemorySize: 256
          CodeUri: .build/plugins/AWSLambdaPackager/outputs/AWSLambdaPackager/Maxi80Lambda/Maxi80Lambda.zip
          Policies:
@@ -37,6 +37,10 @@ Resources:
                     - s3:GetObject
                     - s3:HeadObject
                   Resource: !Sub "arn:aws:s3:::${MetadataBucket}/*"
+                - Effect: Allow
+                  Action:
+                    - s3:GetBucketLocation
+                  Resource: !Sub "arn:aws:s3:::${MetadataBucket}"
          Events:
             ApiEvent:
                Type: Api

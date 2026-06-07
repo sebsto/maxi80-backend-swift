@@ -45,23 +45,9 @@ struct IcecastMetadataCollector: LambdaHandler {
         // Resolve bucket region and retrieve Apple Music secret in parallel.
         // These two async operations are independent — both only need env-derived values.
 
-        async let resolvedBucketRegion: Region = {
-            do {
-                let tempConfig = try await S3Client.S3ClientConfig(region: configuredRegion.rawValue)
-                let tempS3 = S3Client(config: tempConfig)
-                let locationOutput = try await tempS3.getBucketLocation(
-                    input: GetBucketLocationInput(bucket: bucket)
-                )
-                if let locationConstraint = locationOutput.locationConstraint?.rawValue,
-                   !locationConstraint.isEmpty {
-                    return Region(rawValue: locationConstraint)
-                } else {
-                    return .useast1
-                }
-            } catch {
-                return configuredRegion
-            }
-        }()
+        async let resolvedBucketRegion: Region = resolveBucketRegion(
+            bucket: bucket, configuredRegion: configuredRegion
+        )
 
         async let resolvedTokenFactory: JWTTokenFactory = {
             let secretsManager = try SecretsManager<AppleMusicSecret>(

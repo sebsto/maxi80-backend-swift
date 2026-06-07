@@ -79,8 +79,9 @@ struct CoreModelTests {
         let allCases = Maxi80Endpoint.allCases
 
         // Then
-        #expect(allCases.count == 2)
+        #expect(allCases.count == 3)
         #expect(allCases.contains(.station))
         #expect(allCases.contains(.artwork))
+        #expect(allCases.contains(.history))
     }
 }
